@@ -1,0 +1,7 @@
+com\teleexpertise\model\Consultation.class
+com\teleexpertise\model\ActeMedical.class
+com\teleexpertise\model\SignesVitaux.class
+com\teleexpertise\model\Creneau.class
+com\teleexpertise\model\Patient.class
+com\teleexpertise\model\Utilisateur.class
+com\teleexpertise\model\DemandeExpertise.class

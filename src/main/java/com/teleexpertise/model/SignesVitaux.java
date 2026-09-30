@@ -1,5 +1,58 @@
 package com.teleexpertise.model;
 
-public class SignesVitaux {
-    
+import jakarta.persistence.*;
+import java.io.Serializable;
+import java.time.LocalDateTime;
+
+@Entity
+@Table(name = "signes_vitaux")
+public class SignesVitaux implements Serializable {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    private String tensionArterielle;
+    private int frequenceCardiaque;
+    private double temperature;
+    private int frequenceRespiratoire;
+    private Double poids;
+    private Double taille;
+
+    @Column(nullable = false)
+    private LocalDateTime datePrise = LocalDateTime.now();
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "patient_id", nullable = false)
+    private Patient patient;
+
+    public SignesVitaux() {}
+
+    // Getters et Setters
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+
+    public String getTensionArterielle() { return tensionArterielle; }
+    public void setTensionArterielle(String tensionArterielle) { this.tensionArterielle = tensionArterielle; }
+
+    public int getFrequenceCardiaque() { return frequenceCardiaque; }
+    public void setFrequenceCardiaque(int frequenceCardiaque) { this.frequenceCardiaque = frequenceCardiaque; }
+
+    public double getTemperature() { return temperature; }
+    public void setTemperature(double temperature) { this.temperature = temperature; }
+
+    public int getFrequenceRespiratoire() { return frequenceRespiratoire; }
+    public void setFrequenceRespiratoire(int frequenceRespiratoire) { this.frequenceRespiratoire = frequenceRespiratoire; }
+
+    public Double getPoids() { return poids; }
+    public void setPoids(Double poids) { this.poids = poids; }
+
+    public Double getTaille() { return taille; }
+    public void setTaille(Double taille) { this.taille = taille; }
+
+    public LocalDateTime getDatePrise() { return datePrise; }
+    public void setDatePrise(LocalDateTime datePrise) { this.datePrise = datePrise; }
+
+    public Patient getPatient() { return patient; }
+    public void setPatient(Patient patient) { this.patient = patient; }
 }
