@@ -7,7 +7,7 @@
     <persistence-unit name="teleExpertisePU" transaction-type="RESOURCE_LOCAL">
         <provider>org.hibernate.jpa.HibernatePersistenceProvider</provider>
 
-        <!-- Classes Entites -->
+        <!-- classes Entites -->
         <class>com.teleexpertise.model.Utilisateur</class>
         <class>com.teleexpertise.model.Infirmier</class>
         <class>com.teleexpertise.model.Generaliste</class>
@@ -20,13 +20,13 @@
         <class>com.teleexpertise.model.ActeMedical</class>
 
         <properties>
-            <!-- Configuration JDBC MySQL -->
+            <!-- configuration JDBC MySQL -->
             <property name="jakarta.persistence.jdbc.driver" value="com.mysql.cj.jdbc.Driver"/>
             <property name="jakarta.persistence.jdbc.url" value="jdbc:mysql://localhost:3306/tele_expertise_db?useSSL=false&amp;serverTimezone=UTC"/>
             <property name="jakarta.persistence.jdbc.user" value="root"/>
             <property name="jakarta.persistence.jdbc.password" value=""/>
 
-            <!-- Proprietes Hibernate -->
+            <!-- proprietes Hibernate -->
             <property name="hibernate.dialect" value="org.hibernate.dialect.MySQLDialect"/>
             <property name="hibernate.show_sql" value="true"/>
             <property name="hibernate.format_sql" value="true"/>
