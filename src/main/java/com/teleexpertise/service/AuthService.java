@@ -1,8 +1,8 @@
 package com.teleexpertise.service;
 
-import at.favre.lib.crypto.bcrypt.BCrypt;
 import com.teleexpertise.dao.UtilisateurDao;
 import com.teleexpertise.model.Utilisateur;
+import com.teleexpertise.util.PasswordUtil;
 
 import java.util.Optional;
 
@@ -10,28 +10,30 @@ public class AuthService {
 
     private final UtilisateurDao utilisateurDao;
 
-    
+    public AuthService() {
+        this.utilisateurDao = new UtilisateurDao();
+    }
+
     public AuthService(UtilisateurDao utilisateurDao) {
         this.utilisateurDao = utilisateurDao;
     }
 
-    
+
     public Optional<Utilisateur> login(String email, String rawPassword) {
         Optional<Utilisateur> userOpt = utilisateurDao.findByEmail(email);
 
         if (userOpt.isPresent()) {
             Utilisateur user = userOpt.get();
-            BCrypt.Result result = BCrypt.verifyer().verify(rawPassword.toCharArray(), user.getPassword());
-            if (result.verified) {
+            if (PasswordUtil.verifyPassword(rawPassword, user.getPassword())) {
                 return Optional.of(user);
             }
         }
         return Optional.empty();
     }
 
-    
+   
     public Utilisateur registerUser(Utilisateur user, String rawPassword) {
-        String hashedPassword = BCrypt.withDefaults().hashToString(12, rawPassword.toCharArray());
+        String hashedPassword = PasswordUtil.hashPassword(rawPassword);
         user.setPassword(hashedPassword);
         return utilisateurDao.save(user);
     }
