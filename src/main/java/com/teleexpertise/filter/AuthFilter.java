@@ -30,7 +30,7 @@ public class AuthFilter implements Filter {
             return;
         }
 
-        // 2. Vérification de la session utilisateur (Stateful)
+        // 2. verification de la session utilisateur (Stateful)
         HttpSession session = req.getSession(false);
         Utilisateur user = (session != null) ? (Utilisateur) session.getAttribute("user") : null;
 
