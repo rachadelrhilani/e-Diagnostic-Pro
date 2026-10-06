@@ -6,6 +6,7 @@ import java.util.List;
 
 @Entity
 @Table(name = "generalistes")
+@PrimaryKeyJoinColumn(name = "id")
 public class Generaliste extends Utilisateur {
 
     @OneToMany(mappedBy = "generaliste", cascade = CascadeType.ALL)

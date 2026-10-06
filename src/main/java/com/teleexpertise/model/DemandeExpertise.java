@@ -10,30 +10,34 @@ public class DemandeExpertise implements Serializable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id")
     private Long id;
 
-    @Column(columnDefinition = "TEXT", nullable = false)
+    @Column(name = "question", columnDefinition = "TEXT", nullable = false)
     private String question;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(name = "priorite", nullable = false)
     private Priorite priorite;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(name = "statut", nullable = false)
     private StatutExpertise statut = StatutExpertise.EN_ATTENTE;
 
-    @Column(columnDefinition = "TEXT")
+    @Column(name = "avis_medical", columnDefinition = "TEXT")
     private String avisMedical; // Réponse du spécialiste
 
-    @Column(columnDefinition = "TEXT")
+    @Column(name = "recommandations", columnDefinition = "TEXT")
     private String recommandations; // Recommandations du spécialiste
 
+    @Column(name = "date_demande", nullable = false)
     private LocalDateTime dateDemande = LocalDateTime.now();
+
+    @Column(name = "date_reponse")
     private LocalDateTime dateReponse;
 
     @OneToOne
-    @JoinColumn(name = "consultation_id", nullable = false)
+    @JoinColumn(name = "consultation_id", nullable = false, unique = true)
     private Consultation consultation;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -41,7 +45,7 @@ public class DemandeExpertise implements Serializable {
     private Specialiste specialiste;
 
     @OneToOne
-    @JoinColumn(name = "creneau_id")
+    @JoinColumn(name = "creneau_id", unique = true)
     private Creneau creneau;
 
     public DemandeExpertise() {}

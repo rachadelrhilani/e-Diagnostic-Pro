@@ -9,12 +9,13 @@ public class ActeMedical implements Serializable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id")
     private Long id;
 
-    @Column(nullable = false)
+    @Column(name = "nom", length = 150, nullable = false)
     private String nom; // Radiographie, IRM, Analyse de sang, etc.
 
-    @Column(nullable = false)
+    @Column(name = "tarif", nullable = false)
     private double tarif;
 
     @ManyToOne(fetch = FetchType.LAZY)

@@ -10,16 +10,17 @@ public class Creneau implements Serializable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id")
     private Long id;
 
-    @Column(nullable = false)
+    @Column(name = "heure_debut", nullable = false)
     private LocalDateTime heureDebut;
 
-    @Column(nullable = false)
+    @Column(name = "heure_fin", nullable = false)
     private LocalDateTime heureFin;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(name = "statut", nullable = false)
     private StatutCreneau statut = StatutCreneau.DISPONIBLE;
 
     @ManyToOne(fetch = FetchType.LAZY)

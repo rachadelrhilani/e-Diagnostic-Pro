@@ -10,16 +10,28 @@ public class SignesVitaux implements Serializable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id")
     private Long id;
 
+    @Column(name = "tension_arterielle", length = 20)
     private String tensionArterielle;
+
+    @Column(name = "frequence_cardiaque")
     private int frequenceCardiaque;
+
+    @Column(name = "temperature")
     private double temperature;
+
+    @Column(name = "frequence_respiratoire")
     private int frequenceRespiratoire;
+
+    @Column(name = "poids")
     private Double poids;
+
+    @Column(name = "taille")
     private Double taille;
 
-    @Column(nullable = false)
+    @Column(name = "date_prise", nullable = false)
     private LocalDateTime datePrise = LocalDateTime.now();
 
     @ManyToOne(fetch = FetchType.LAZY)

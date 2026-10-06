@@ -10,22 +10,23 @@ public class Utilisateur implements Serializable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id")
     private Long id;
 
-    @Column(nullable = false)
+    @Column(name = "nom", length = 100, nullable = false)
     private String nom;
 
-    @Column(nullable = false)
+    @Column(name = "prenom", length = 100, nullable = false)
     private String prenom;
 
-    @Column(nullable = false, unique = true)
+    @Column(name = "email", length = 150, nullable = false, unique = true)
     private String email;
 
-    @Column(nullable = false)
+    @Column(name = "password", length = 255, nullable = false)
     private String password; // Haché avec BCrypt
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(name = "role", nullable = false)
     private Role role;
 
     public Utilisateur() {}

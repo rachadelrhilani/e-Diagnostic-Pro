@@ -73,6 +73,7 @@ public class DemandeExpertiseDao extends GenericDaoImpl<DemandeExpertise, Long> 
                 "SELECT d FROM DemandeExpertise d " +
                 "JOIN FETCH d.consultation c " +
                 "JOIN FETCH c.patient p " +
+                "JOIN FETCH c.generaliste g " +
                 "WHERE d.specialiste.id = :specialisteId " +
                 "ORDER BY d.dateDemande DESC", DemandeExpertise.class)
                 .setParameter("specialisteId", specialisteId)

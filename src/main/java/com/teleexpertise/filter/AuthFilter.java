@@ -24,13 +24,13 @@ public class AuthFilter implements Filter {
         HttpServletResponse res = (HttpServletResponse) response;
         String path = req.getRequestURI().substring(req.getContextPath().length());
 
-        // 1. Autoriser l'accès aux ressources statiques (CSS, JS, images) et à la page de login
-        if (path.startsWith("/assets/") || path.startsWith("/auth/login") || path.equals("/login")) {
+        // 1. Autoriser toutes les routes d'authentification (/auth/*) et les ressources statiques
+        if (path.startsWith("/assets/") || path.startsWith("/auth") || path.equals("/login")) {
             chain.doFilter(request, response);
             return;
         }
 
-        // 2. verification de la session utilisateur (Stateful)
+        // 2. Vérification de la session utilisateur
         HttpSession session = req.getSession(false);
         Utilisateur user = (session != null) ? (Utilisateur) session.getAttribute("user") : null;
 

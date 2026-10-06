@@ -12,30 +12,37 @@ public class Patient implements Serializable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id")
     private Long id;
 
-    @Column(nullable = false)
+    @Column(name = "nom", length = 100, nullable = false)
     private String nom;
 
-    @Column(nullable = false)
+    @Column(name = "prenom", length = 100, nullable = false)
     private String prenom;
 
+    @Column(name = "date_naissance")
     private LocalDate dateNaissance;
 
-    @Column(nullable = false, unique = true)
+    @Column(name = "numero_securite_sociale", length = 50, nullable = false, unique = true)
     private String numeroSecuriteSociale;
 
+    @Column(name = "mutuelle", length = 100)
     private String mutuelle;
+
+    @Column(name = "telephone", length = 30)
     private String telephone;
+
+    @Column(name = "adresse", columnDefinition = "TEXT")
     private String adresse;
 
-    @Column(columnDefinition = "TEXT")
+    @Column(name = "antecedents", columnDefinition = "TEXT")
     private String antecedents;
 
-    @Column(columnDefinition = "TEXT")
+    @Column(name = "allergies", columnDefinition = "TEXT")
     private String allergies;
 
-    @Column(columnDefinition = "TEXT")
+    @Column(name = "traitements_en_cours", columnDefinition = "TEXT")
     private String traitementsEnCours;
 
     @OneToMany(mappedBy = "patient", cascade = CascadeType.ALL)

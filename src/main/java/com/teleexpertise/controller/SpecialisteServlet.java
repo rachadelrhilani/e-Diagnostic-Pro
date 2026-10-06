@@ -35,15 +35,39 @@ public class SpecialisteServlet extends HttpServlet {
         String path = req.getPathInfo();
         Utilisateur user = (Utilisateur) req.getSession().getAttribute("user");
 
-        if ("/dashboard".equals(path) || "/demandes".equals(path)) {
+        if (path == null || "/dashboard".equals(path) || "/demandes".equals(path)) {
             String statutStr = req.getParameter("statut");
             String prioriteStr = req.getParameter("priorite");
 
             StatutExpertise statut = (statutStr != null && !statutStr.isEmpty()) ? StatutExpertise.valueOf(statutStr) : null;
             Priorite priorite = (prioriteStr != null && !prioriteStr.isEmpty()) ? Priorite.valueOf(prioriteStr) : null;
 
+            // 1. Récupération des demandes filtrées
             List<DemandeExpertise> demandes = specialisteService.consulterDemandesFiltrees(user.getId(), statut, priorite);
+            
+            // 2. Récupération de l'ensemble des demandes pour calculer les KPIs
+            List<DemandeExpertise> toutesLesDemandes = specialisteService.consulterDemandesFiltrees(user.getId(), null, null);
+            List<Creneau> creneaux = specialisteService.consulterCreneaux(user.getId());
+
+            // 3. Calculs dynamiques via Stream API
+            long demandesEnAttenteCount = toutesLesDemandes.stream()
+                    .filter(d -> d.getStatut() == StatutExpertise.EN_ATTENTE)
+                    .count();
+
+            long avisRendusCount = toutesLesDemandes.stream()
+                    .filter(d -> d.getStatut() == StatutExpertise.TERMINEE)
+                    .count();
+
+            long creneauxDispoCount = creneaux.stream()
+                    .filter(c -> "DISPONIBLE".equals(c.getStatut()))
+                    .count();
+
+            // 4. Transmission à la vue JSP
             req.setAttribute("demandes", demandes);
+            req.setAttribute("demandesEnAttenteCount", demandesEnAttenteCount);
+            req.setAttribute("avisRendusCount", avisRendusCount);
+            req.setAttribute("creneauxDispoCount", creneauxDispoCount);
+
             req.getRequestDispatcher("/WEB-INF/views/specialiste/dashboard.jsp").forward(req, resp);
 
         } else if ("/creneaux".equals(path)) {

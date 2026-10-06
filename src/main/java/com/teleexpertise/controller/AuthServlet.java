@@ -21,7 +21,6 @@ public class AuthServlet extends HttpServlet {
 
     @Override
     public void init() throws ServletException {
-        // Injection de la dépendance DAO dans le Service
         UtilisateurDao utilisateurDao = new UtilisateurDao();
         this.authService = new AuthService(utilisateurDao);
     }
@@ -30,7 +29,7 @@ public class AuthServlet extends HttpServlet {
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         String path = req.getPathInfo();
 
-        if ("/logout".equals(path)) {
+        if (path != null && path.contains("logout")) {
             HttpSession session = req.getSession(false);
             if (session != null) {
                 session.invalidate();
@@ -47,23 +46,30 @@ public class AuthServlet extends HttpServlet {
         String email = req.getParameter("email");
         String password = req.getParameter("password");
 
+        System.out.println("=== DEBUT LOGIN ===");
+        System.out.println("Email saisi : " + email);
+
         Optional<Utilisateur> userOpt = authService.login(email, password);
 
         if (userOpt.isPresent()) {
             Utilisateur user = userOpt.get();
+            System.out.println("Connexion réussie pour : " + user.getNom() + " (" + user.getRole() + ")");
+
             HttpSession session = req.getSession(true);
             session.setAttribute("user", user);
 
-            if (user.getRole() == Role.INFIRMIER) {
+            Role role = user.getRole();
+            if (role == Role.INFIRMIER) {
                 resp.sendRedirect(req.getContextPath() + "/infirmier/dashboard");
-            } else if (user.getRole() == Role.GENERALISTE) {
+            } else if (role == Role.GENERALISTE) {
                 resp.sendRedirect(req.getContextPath() + "/generaliste/dashboard");
-            } else if (user.getRole() == Role.SPECIALISTE) {
+            } else if (role == Role.SPECIALISTE) {
                 resp.sendRedirect(req.getContextPath() + "/specialiste/dashboard");
             } else {
                 resp.sendRedirect(req.getContextPath() + "/auth/login");
             }
         } else {
+            System.out.println("Echec d'authentification pour : " + email);
             req.setAttribute("error", "Email ou mot de passe incorrect.");
             req.getRequestDispatcher("/WEB-INF/views/auth/login.jsp").forward(req, resp);
         }

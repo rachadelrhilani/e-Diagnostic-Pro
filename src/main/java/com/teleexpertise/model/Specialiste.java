@@ -6,15 +6,16 @@ import java.util.List;
 
 @Entity
 @Table(name = "specialistes")
+@PrimaryKeyJoinColumn(name = "id")
 public class Specialiste extends Utilisateur {
 
-    @Column(nullable = false)
+    @Column(name = "specialite", length = 100, nullable = false)
     private String specialite; // ex: Cardiologue, Pneumologue, etc.
 
-    @Column(nullable = false)
+    @Column(name = "tarif", nullable = false)
     private double tarif; // Tarif de consultation / expertise
 
-    @Column(nullable = false)
+    @Column(name = "duree_moyenne", nullable = false)
     private int dureeMoyenne = 30; // 30 minutes par défaut
 
     @OneToMany(mappedBy = "specialiste", cascade = CascadeType.ALL, orphanRemoval = true)

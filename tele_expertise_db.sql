@@ -48,7 +48,7 @@ CREATE TABLE `consultations` (
   `diagnostic` text COLLATE utf8mb4_unicode_ci,
   `traitement` text COLLATE utf8mb4_unicode_ci,
   `cout_base` double NOT NULL DEFAULT '150',
-  `statut` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'EN_COURS',
+  `statut` enum('EN_COURS','EN_ATTENTE_AVIS_SPECIALISTE','TERMINEE') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'EN_COURS',
   `patient_id` bigint NOT NULL,
   `generaliste_id` bigint NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -63,7 +63,7 @@ CREATE TABLE `creneaux` (
   `id` bigint NOT NULL,
   `heure_debut` datetime NOT NULL,
   `heure_fin` datetime NOT NULL,
-  `statut` varchar(30) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'DISPONIBLE',
+  `statut` enum('DISPONIBLE','RESERVE','INDISPONIBLE','ARCHIVE') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'DISPONIBLE',
   `specialiste_id` bigint NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -76,8 +76,8 @@ CREATE TABLE `creneaux` (
 CREATE TABLE `demandes_expertise` (
   `id` bigint NOT NULL,
   `question` text COLLATE utf8mb4_unicode_ci NOT NULL,
-  `priorite` varchar(20) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `statut` varchar(30) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'EN_ATTENTE',
+  `priorite` enum('URGENTE','NORMALE','NON_URGENTE') COLLATE utf8mb4_unicode_ci NOT NULL,
+  `statut` enum('EN_ATTENTE','TERMINEE','ANNULEE') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'EN_ATTENTE',
   `avis_medical` text COLLATE utf8mb4_unicode_ci,
   `recommandations` text COLLATE utf8mb4_unicode_ci,
   `date_demande` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -170,7 +170,7 @@ CREATE TABLE `utilisateurs` (
   `prenom` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
   `email` varchar(150) COLLATE utf8mb4_unicode_ci NOT NULL,
   `password` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `role` varchar(30) COLLATE utf8mb4_unicode_ci NOT NULL
+  `role` enum('INFIRMIER','GENERALISTE','SPECIALISTE','ADMINISTRATEUR') COLLATE utf8mb4_unicode_ci NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --

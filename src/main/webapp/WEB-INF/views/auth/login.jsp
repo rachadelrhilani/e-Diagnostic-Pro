@@ -1,4 +1,4 @@
-<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<%@ page contentType="text/html;charset=UTF-8" language="java" isELIgnored="false" %>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
 <!DOCTYPE html>
 <html lang="fr" class="h-full">
@@ -10,7 +10,7 @@
 </head>
 <body class="h-full bg-slate-950 flex items-center justify-center relative overflow-hidden font-sans antialiased">
 
-    <!-- Orbes de couleur en arrière-plan pour révéler la transparence du verre -->
+    <!-- Orbes de couleur en arrière-plan -->
     <div class="absolute -top-32 -left-32 w-96 h-96 bg-indigo-600/30 rounded-full blur-3xl pointer-events-none"></div>
     <div class="absolute -bottom-32 -right-32 w-96 h-96 bg-emerald-500/20 rounded-full blur-3xl pointer-events-none"></div>
     <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-blue-500/20 rounded-full blur-3xl pointer-events-none"></div>
@@ -31,8 +31,8 @@
             </div>
         </c:if>
 
-        <!-- Formulaire avec Token CSRF -->
-        <form action="${pageContext.request.contextPath}/auth/login" method="post" class="space-y-5">
+        <!-- Formulaire avec URL JSTL et Token CSRF -->
+        <form action="<c:url value='/auth/login'/>" method="post" class="space-y-5">
             <input type="hidden" name="_csrf" value="${sessionScope.csrfToken}" />
 
             <div>
