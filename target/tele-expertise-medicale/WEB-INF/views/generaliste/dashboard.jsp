@@ -1,58 +1,49 @@
-<%@ page contentType="text/html;charset=UTF-8" language="java" isELIgnored="false"%>
+<%@ page contentType="text/html;charset=UTF-8" language="java" isELIgnored="false" %>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
 <jsp:include page="../templates/header.jsp" />
 
 <div class="space-y-6">
-    <!-- En-tête de section -->
-    <div class="border-b border-slate-800 pb-5">
-        <h2 class="text-2xl font-bold text-white tracking-wide">Espace Médecin Généraliste</h2>
-        <p class="text-sm text-slate-400 mt-1">Gestion des consultations, diagnostics et télé-expertises.</p>
+    <div class="flex justify-between items-center border-b border-slate-800 pb-5">
+        <div>
+            <h2 class="text-2xl font-bold text-white tracking-wide">Tableau de Bord - Généraliste</h2>
+            <p class="text-sm text-slate-400 mt-1">Gérez vos consultations et demandes de télé-expertise.</p>
+        </div>
     </div>
 
-    <!-- Alert de message -->
+    <!-- Alertes -->
     <c:if test="${not empty param.msg}">
         <div class="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-sm flex items-center gap-2">
             <span>✅</span> ${param.msg}
         </div>
     </c:if>
 
-    <!-- Cartes d'action rapide -->
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <!-- Carte 1: Démarrer Consultation -->
-        <div class="p-6 rounded-2xl bg-slate-800/50 backdrop-blur-md border border-slate-700/50 shadow-xl space-y-4">
-            <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-xl bg-indigo-500/20 text-indigo-400 flex items-center justify-center font-bold text-lg border border-indigo-500/30">
-                    🩺
+    <!-- Section Créer une Consultation (US1) -->
+    <div class="p-6 rounded-2xl bg-slate-800/40 border border-slate-700/50 backdrop-blur-md shadow-xl">
+        <h3 class="text-lg font-bold text-white mb-4 flex items-center gap-2">🩺 Nouvelle Consultation (150 DH)</h3>
+        <form action="${pageContext.request.contextPath}/generaliste/creer-consultation" method="post" class="space-y-4">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">Patient</label>
+                    <select name="patientId" required class="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-white text-sm focus:outline-none">
+                        <option value="" disabled selected>-- Sélectionner un patient --</option>
+                        <c:forEach var="p" items="${patientsEnAttente}">
+                            <option value="${p.id}">${p.nom} ${p.prenom} (${p.numeroSecuriteSociale})</option>
+                        </c:forEach>
+                    </select>
                 </div>
                 <div>
-                    <h3 class="text-lg font-bold text-white">Nouvelle Consultation</h3>
-                    <p class="text-xs text-slate-400">Coût fixe: 150 DH</p>
-                </div>
-            </div>
-            <p class="text-sm text-slate-300">Sélectionner un patient dans la file d'attente pour lancer son examen clinique et l'analyse de ses symptômes.</p>
-            <a href="${pageContext.request.contextPath}/infirmier/dashboard" 
-               class="inline-block w-full text-center py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-sm transition shadow-lg shadow-indigo-600/20 border border-indigo-400/30">
-                Choisir un patient
-            </a>
-        </div>
-
-        <!-- Carte 2: Rechercher Spécialiste -->
-        <div class="p-6 rounded-2xl bg-slate-800/50 backdrop-blur-md border border-slate-700/50 shadow-xl space-y-4">
-            <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-xl bg-blue-500/20 text-blue-400 flex items-center justify-center font-bold text-lg border border-blue-500/30">
-                    🔍
+                    <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">Motif</label>
+                    <input type="text" name="motif" required placeholder="ex: Céphalées intenses" class="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-white text-sm focus:outline-none" />
                 </div>
                 <div>
-                    <h3 class="text-lg font-bold text-white">Demande de Télé-expertise</h3>
-                    <p class="text-xs text-slate-400">Cardiologue, Dermatologue, etc.</p>
+                    <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">Observations</label>
+                    <input type="text" name="observations" placeholder="Remarques initiales..." class="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-white text-sm focus:outline-none" />
                 </div>
             </div>
-            <p class="text-sm text-slate-300">Rechercher et filtrer les avis spécialistes par tarif et sélectionner un créneau de réservation.</p>
-            <a href="${pageContext.request.contextPath}/generaliste/recherche-specialiste" 
-               class="inline-block w-full text-center py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-sm transition shadow-lg shadow-blue-600/20 border border-blue-400/30">
-                Consulter l'annuaire spécialistes
-            </a>
-        </div>
+            <button type="submit" class="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-sm transition shadow-lg shadow-indigo-600/30">
+                Démarrer la consultation
+            </button>
+        </form>
     </div>
 </div>
 
