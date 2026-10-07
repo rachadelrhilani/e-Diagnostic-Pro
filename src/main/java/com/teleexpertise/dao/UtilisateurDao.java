@@ -1,5 +1,6 @@
 package com.teleexpertise.dao;
 
+import com.teleexpertise.model.Generaliste;
 import com.teleexpertise.model.Specialiste;
 import com.teleexpertise.model.Utilisateur;
 import com.teleexpertise.util.JPAUtil;
@@ -7,6 +8,7 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityTransaction;
 import jakarta.persistence.NoResultException;
 
+import java.util.List;
 import java.util.Optional;
 
 public class UtilisateurDao extends GenericDaoImpl<Utilisateur, Long> {
@@ -51,6 +53,16 @@ public class UtilisateurDao extends GenericDaoImpl<Utilisateur, Long> {
         } catch (Exception e) {
             if (tx.isActive()) tx.rollback();
             throw e;
+        } finally {
+            em.close();
+        }
+    }
+
+    public List<Generaliste> findAllGeneralistes() {
+        EntityManager em = JPAUtil.getEntityManager();
+        try {
+            return em.createQuery("SELECT g FROM Generaliste g", Generaliste.class)
+                    .getResultList();
         } finally {
             em.close();
         }

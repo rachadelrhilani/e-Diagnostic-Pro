@@ -1,6 +1,8 @@
 package com.teleexpertise.service;
 
+import com.teleexpertise.dao.ConsultationDao;
 import com.teleexpertise.dao.PatientDao;
+import com.teleexpertise.dao.UtilisateurDao;
 import com.teleexpertise.model.Patient;
 import com.teleexpertise.model.SignesVitaux;
 import org.junit.jupiter.api.BeforeEach;
@@ -16,6 +18,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -23,6 +26,12 @@ class InfirmierServiceTest {
 
     @Mock
     private PatientDao patientDao;
+
+    @Mock
+    private ConsultationDao consultationDao; // Ajout du mock pour corriger le NullPointerException
+
+    @Mock
+    private UtilisateurDao utilisateurDao; // Ajout du mock pour la gestion des généralistes
 
     @InjectMocks
     private InfirmierService infirmierService;
@@ -74,6 +83,9 @@ class InfirmierServiceTest {
         patientHier.getSignesVitaux().add(svHier);
 
         when(patientDao.findAllWithSignesVitaux()).thenReturn(Arrays.asList(patient1, patient2, patientHier));
+        
+        // Mock du comportement de consultationDao pour éviter la NullPointerException lors de la boucle d'enrichissement
+        when(consultationDao.aUneConsultationEnCours(anyLong())).thenReturn(false);
 
         List<Patient> resultat = infirmierService.getPatientsDuJour();
 
@@ -81,7 +93,8 @@ class InfirmierServiceTest {
         assertEquals(2, resultat.size(), "Seuls 2 patients enregistrés aujourd'hui doivent être retenus");
         assertEquals("Bennani", resultat.get(0).getNom(), "Le patient arrivé à H-4 doit être en premier (tri chrono)");
         assertEquals("El Amrani", resultat.get(1).getNom(), "Le patient arrivé à H-2 doit être en second");
-        
+
         verify(patientDao, times(1)).findAllWithSignesVitaux();
+        verify(consultationDao, times(2)).aUneConsultationEnCours(anyLong());
     }
 }

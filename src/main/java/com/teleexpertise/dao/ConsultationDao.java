@@ -10,6 +10,8 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityTransaction;
 
 import java.time.LocalDateTime;
+import java.util.Arrays;
+import java.util.List;
 
 public class ConsultationDao extends GenericDaoImpl<Consultation, Long> {
 
@@ -41,7 +43,8 @@ public class ConsultationDao extends GenericDaoImpl<Consultation, Long> {
             tx.commit();
             return consultation;
         } catch (Exception e) {
-            if (tx.isActive()) tx.rollback();
+            if (tx.isActive())
+                tx.rollback();
             throw e;
         } finally {
             em.close();
@@ -49,7 +52,8 @@ public class ConsultationDao extends GenericDaoImpl<Consultation, Long> {
     }
 
     /**
-     * Scénario A: Finaliser et clôturer la consultation directe (Diagnostic + Traitement)
+     * Scénario A: Finaliser et clôturer la consultation directe (Diagnostic +
+     * Traitement)
      */
     public void cloturerConsultationDirecte(Long consultationId, String diagnostic, String traitement) {
         EntityManager em = JPAUtil.getEntityManager();
@@ -65,7 +69,8 @@ public class ConsultationDao extends GenericDaoImpl<Consultation, Long> {
             }
             tx.commit();
         } catch (Exception e) {
-            if (tx.isActive()) tx.rollback();
+            if (tx.isActive())
+                tx.rollback();
             throw e;
         } finally {
             em.close();
@@ -73,7 +78,8 @@ public class ConsultationDao extends GenericDaoImpl<Consultation, Long> {
     }
 
     /**
-     * Actes techniques médicaux: Associer un acte à une consultation (Ex: Radiographie, IRM, Sang)
+     * Actes techniques médicaux: Associer un acte à une consultation (Ex:
+     * Radiographie, IRM, Sang)
      */
     public ActeMedical addActeMedical(Long consultationId, ActeMedical acte) {
         EntityManager em = JPAUtil.getEntityManager();
@@ -89,7 +95,8 @@ public class ConsultationDao extends GenericDaoImpl<Consultation, Long> {
             tx.commit();
             return acte;
         } catch (Exception e) {
-            if (tx.isActive()) tx.rollback();
+            if (tx.isActive())
+                tx.rollback();
             throw e;
         } finally {
             em.close();
@@ -97,19 +104,44 @@ public class ConsultationDao extends GenericDaoImpl<Consultation, Long> {
     }
 
     /**
-     * Charger une consultation complète avec ses actes techniques et sa demande d'expertise (pour calcul du coût total)
+     * Charger une consultation complète avec ses actes techniques et sa demande
+     * d'expertise (pour calcul du coût total)
      */
     public Consultation findConsultationComplete(Long consultationId) {
         EntityManager em = JPAUtil.getEntityManager();
         try {
             return em.createQuery(
-                "SELECT DISTINCT c FROM Consultation c " +
-                "LEFT JOIN FETCH c.actesMedicaux " +
-                "LEFT JOIN FETCH c.demandeExpertise d " +
-                "LEFT JOIN FETCH d.specialiste " +
-                "WHERE c.id = :id", Consultation.class)
-                .setParameter("id", consultationId)
-                .getSingleResult();
+                    "SELECT DISTINCT c FROM Consultation c " +
+                            "LEFT JOIN FETCH c.actesMedicaux " +
+                            "LEFT JOIN FETCH c.demandeExpertise d " +
+                            "LEFT JOIN FETCH d.specialiste " +
+                            "WHERE c.id = :id",
+                    Consultation.class)
+                    .setParameter("id", consultationId)
+                    .getSingleResult();
+        } finally {
+            em.close();
+        }
+    }
+
+    public boolean aUneConsultationEnCours(Long patientId) {
+        EntityManager em = JPAUtil.getEntityManager();
+        try {
+            // Liste des statuts considérés comme "en cours d'attente / de traitement"
+            List<StatutConsultation> statutsActifs = Arrays.asList(
+                    StatutConsultation.EN_COURS,
+                    StatutConsultation.EN_ATTENTE_AVIS_SPECIALISTE);
+
+            Long count = em.createQuery(
+                    "SELECT COUNT(c) FROM Consultation c " +
+                            "WHERE c.patient.id = :patientId " +
+                            "AND c.statut IN :statutsActifs",
+                    Long.class)
+                    .setParameter("patientId", patientId)
+                    .setParameter("statutsActifs", statutsActifs)
+                    .getSingleResult();
+
+            return count > 0;
         } finally {
             em.close();
         }

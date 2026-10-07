@@ -6,10 +6,10 @@
     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-800 pb-5">
         <div>
             <h2 class="text-2xl font-bold text-white tracking-wide">File d'attente des Patients</h2>
-            <p class="text-sm text-slate-400 mt-1">Liste des patients enregistrés aujourd'hui par ordre d'arrivée.</p>
+            <p class="text-sm text-slate-400 mt-1">Liste des patients enregistrés par ordre d'arrivée.</p>
         </div>
-        <a href="${pageContext.request.contextPath}/infirmier/recherche" 
-           class="inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white font-medium px-4 py-2.5 rounded-xl shadow-lg shadow-emerald-600/20 border border-emerald-500/30 transition text-sm">
+        <a href="${pageContext.request.contextPath}/infirmier/recherche"
+            class="inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white font-medium px-4 py-2.5 rounded-xl shadow-lg shadow-emerald-600/20 border border-emerald-500/30 transition text-sm">
             <span>➕</span> Accueillir un Patient
         </a>
     </div>
@@ -21,6 +21,23 @@
         </div>
     </c:if>
 
+    <!-- Alert d'erreur -->
+    <c:if test="${not empty param.error}">
+        <div class="p-4 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-sm flex items-center gap-2">
+            <span>⚠️</span> ${param.error}
+        </div>
+    </c:if>
+
+    <!-- Formulaire de filtre par date -->
+    <form action="${pageContext.request.contextPath}/infirmier/dashboard" method="get" class="flex items-center gap-3 mb-6">
+        <label for="dateFiltre" class="text-xs font-semibold text-slate-300 uppercase tracking-wider">
+            Filtrer par date d'enregistrement :
+        </label>
+        <input type="date" id="dateFiltre" name="dateFiltre" value="${dateSelectionnee}"
+            onchange="this.form.submit()"
+            class="px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500/50" />
+    </form>
+
     <!-- Tableau des patients -->
     <div class="bg-slate-800/50 backdrop-blur-md rounded-2xl border border-slate-700/50 overflow-hidden shadow-xl">
         <table class="w-full text-left border-collapse">
@@ -30,6 +47,7 @@
                     <th class="px-6 py-4">N° Sécurité Sociale</th>
                     <th class="px-6 py-4">Heure d'arrivée</th>
                     <th class="px-6 py-4">Signes Vitaux</th>
+                    <th class="px-6 py-4 text-right">Action</th>
                 </tr>
             </thead>
             <tbody class="divide-y divide-slate-700/50 text-sm">
@@ -57,12 +75,38 @@
                                 </div>
                             </c:if>
                         </td>
+                        <td class="px-6 py-4 text-right">
+                            <c:choose>
+                                <c:when test="${p.consultationEnCours}">
+                                    <span class="px-3 py-1.5 rounded-lg bg-amber-500/10 text-amber-400 border border-amber-500/20 text-xs font-semibold inline-block">
+                                        ⏳ Déjà en file
+                                    </span>
+                                </c:when>
+                                <c:otherwise>
+                                    <form action="${pageContext.request.contextPath}/infirmier/envoyer-file-dattente" method="post" class="inline-flex items-center gap-2">
+                                        <input type="hidden" name="patientId" value="${p.id}" />
+
+                                        <select name="generalisteId" required class="px-2 py-1.5 rounded-lg bg-slate-900 border border-slate-700 text-xs text-slate-300 focus:outline-none">
+                                            <option value="" disabled selected>-- Choisir médecin --</option>
+                                            <c:forEach var="medecin" items="${listeGeneralistes}">
+                                                <option value="${medecin.id}">Dr. ${medecin.prenom} ${medecin.nom}</option>
+                                            </c:forEach>
+                                        </select>
+
+                                        <button type="submit" class="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold transition">
+                                            ➕ Placer
+                                        </button>
+                                    </form>
+                                </c:otherwise>
+                            </c:choose>
+                        </td>
                     </tr>
                 </c:forEach>
+
                 <c:if test="${empty patients}">
                     <tr>
-                        <td colspan="4" class="px-6 py-8 text-center text-slate-500">
-                            Aucun patient enregistre dans la file d'attente aujourd'hui.
+                        <td colspan="5" class="px-6 py-8 text-center text-slate-500">
+                            Aucun patient enregistré dans la file d'attente à cette date.
                         </td>
                     </tr>
                 </c:if>

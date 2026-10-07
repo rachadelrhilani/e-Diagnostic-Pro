@@ -1,6 +1,9 @@
 package com.teleexpertise.controller;
 
+import com.teleexpertise.dao.ConsultationDao;
 import com.teleexpertise.dao.PatientDao;
+import com.teleexpertise.dao.UtilisateurDao;
+import com.teleexpertise.model.Generaliste;
 import com.teleexpertise.model.Patient;
 import com.teleexpertise.model.SignesVitaux;
 import com.teleexpertise.service.InfirmierService;
@@ -23,19 +26,39 @@ public class InfirmierServlet extends HttpServlet {
     @Override
     public void init() throws ServletException {
         PatientDao patientDao = new PatientDao();
-        this.infirmierService = new InfirmierService(patientDao);
+        ConsultationDao consultationDao = new ConsultationDao();
+        UtilisateurDao utilisateurDao = new UtilisateurDao();
+        this.infirmierService = new InfirmierService(patientDao, consultationDao, utilisateurDao);
     }
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         String path = req.getPathInfo();
 
-        if ("/dashboard".equals(path) || "/patients".equals(path)) {
-            List<Patient> patientsDuJour = infirmierService.getPatientsDuJour();
-            req.setAttribute("patients", patientsDuJour);
+        if (path == null || "/dashboard".equals(path) || "/patients".equals(path)) {
+            // 1. Récupération du paramètre "dateFiltre" envoyé depuis la page JSP
+            String dateStr = req.getParameter("dateFiltre");
+
+            LocalDate dateRecherche;
+            if (dateStr != null && !dateStr.trim().isEmpty()) {
+                dateRecherche = LocalDate.parse(dateStr.trim());
+            } else {
+                dateRecherche = LocalDate.now(); // Date du jour par défaut
+            }
+
+            // 2. Appel du service avec le filtrage Stream API et le tri par heure d'arrivée
+            List<Patient> patientsFiltres = infirmierService.getPatientsParDate(dateRecherche);
+            List<Generaliste> generalistes = infirmierService.getAllGeneralistes();
+            // 3. Transmission des données et de la date sélectionnée à la JSP
+            req.setAttribute("patients", patientsFiltres);
+            req.setAttribute("dateSelectionnee", dateRecherche);
+            req.setAttribute("listeGeneralistes", generalistes);
+
             req.getRequestDispatcher("/WEB-INF/views/infirmier/dashboard.jsp").forward(req, resp);
+
         } else if ("/recherche".equals(path)) {
             req.getRequestDispatcher("/WEB-INF/views/infirmier/recherche.jsp").forward(req, resp);
+
         } else {
             resp.sendRedirect(req.getContextPath() + "/infirmier/dashboard");
         }
@@ -80,17 +103,46 @@ public class InfirmierServlet extends HttpServlet {
             infirmierService.enregistrerNouveauPatient(p, sv);
 
             resp.sendRedirect(req.getContextPath() + "/infirmier/dashboard?msg=Patient+cree+et+ajoute+a+la+file");
+        } else if ("/envoyer-file-dattente".equals(action)) {
+            String patientIdStr = req.getParameter("patientId");
+            String generalisteIdStr = req.getParameter("generalisteId");
+
+            if (patientIdStr == null || patientIdStr.trim().isEmpty() ||
+                    generalisteIdStr == null || generalisteIdStr.trim().isEmpty()) {
+                resp.sendRedirect(
+                        req.getContextPath() + "/infirmier/dashboard?error=Veuillez+selectionner+un+generaliste");
+                return;
+            }
+
+            Long patientId = Long.parseLong(patientIdStr.trim());
+            Long generalisteId = Long.parseLong(generalisteIdStr.trim());
+            String motif = req.getParameter("motif");
+            String observations = req.getParameter("observations");
+
+            try {
+                infirmierService.envoyerVersFileDattente(patientId, generalisteId, motif, observations);
+                resp.sendRedirect(req.getContextPath() + "/infirmier/dashboard?msg=Patient+place+en+file+d+attente");
+            } catch (IllegalStateException e) {
+                // Redirection avec le message d'erreur si déjà en cours
+                resp.sendRedirect(req.getContextPath() + "/infirmier/dashboard?error="
+                        + java.net.URLEncoder.encode(e.getMessage(), "UTF-8"));
+            }
         }
     }
 
     private SignesVitaux extraireSignesVitaux(HttpServletRequest req) {
         SignesVitaux sv = new SignesVitaux();
         sv.setTensionArterielle(req.getParameter("tension"));
-        if (req.getParameter("frequenceCardiaque") != null) sv.setFrequenceCardiaque(Integer.parseInt(req.getParameter("frequenceCardiaque")));
-        if (req.getParameter("temperature") != null) sv.setTemperature(Double.parseDouble(req.getParameter("temperature")));
-        if (req.getParameter("frequenceRespiratoire") != null) sv.setFrequenceRespiratoire(Integer.parseInt(req.getParameter("frequenceRespiratoire")));
-        if (req.getParameter("poids") != null) sv.setPoids(Double.parseDouble(req.getParameter("poids")));
-        if (req.getParameter("taille") != null) sv.setTaille(Double.parseDouble(req.getParameter("taille")));
+        if (req.getParameter("frequenceCardiaque") != null)
+            sv.setFrequenceCardiaque(Integer.parseInt(req.getParameter("frequenceCardiaque")));
+        if (req.getParameter("temperature") != null)
+            sv.setTemperature(Double.parseDouble(req.getParameter("temperature")));
+        if (req.getParameter("frequenceRespiratoire") != null)
+            sv.setFrequenceRespiratoire(Integer.parseInt(req.getParameter("frequenceRespiratoire")));
+        if (req.getParameter("poids") != null)
+            sv.setPoids(Double.parseDouble(req.getParameter("poids")));
+        if (req.getParameter("taille") != null)
+            sv.setTaille(Double.parseDouble(req.getParameter("taille")));
         return sv;
     }
 }
