@@ -48,7 +48,7 @@ class InfirmierServiceTest {
         patient1.setNumeroSecuriteSociale("123456789");
 
         SignesVitaux sv1 = new SignesVitaux();
-        sv1.setDatePrise(LocalDateTime.now().minusHours(2)); // Enregistré aujourd'hui à H-2
+        sv1.setDatePrise(java.time.LocalDate.now().atTime(10, 0)); // Enregistré aujourd'hui à 10h
         patient1.getSignesVitaux().add(sv1);
 
         patient2 = new Patient();
@@ -58,7 +58,7 @@ class InfirmierServiceTest {
         patient2.setNumeroSecuriteSociale("987654321");
 
         SignesVitaux sv2 = new SignesVitaux();
-        sv2.setDatePrise(LocalDateTime.now().minusHours(4)); // Enregistré aujourd'hui à H-4 (Plus ancien)
+        sv2.setDatePrise(java.time.LocalDate.now().atTime(8, 0)); // Enregistré aujourd'hui à 8h (Plus ancien)
         patient2.getSignesVitaux().add(sv2);
     }
 

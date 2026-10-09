@@ -79,4 +79,55 @@ class GeneralisteServiceTest {
         assertEquals(700.0, coutTotal, 0.001);
         verify(consultationDao, times(1)).findConsultationComplete(10L);
     }
+
+    @Test
+    void testCreerConsultation_US1() {
+        Consultation consult = new Consultation();
+        consult.setId(1L);
+        consult.setCoutBase(150.0);
+        consult.setMotif("Céphalées intenses");
+        consult.setObservations("Patient fébrile");
+
+        when(consultationDao.creerConsultation(100L, 200L, "Céphalées intenses", "Patient fébrile"))
+                .thenReturn(consult);
+
+        Consultation res = generalisteService.creerConsultation(100L, 200L, "Céphalées intenses", "Patient fébrile");
+
+        assertNotNull(res);
+        assertEquals(150.0, res.getCoutBase());
+        assertEquals("Céphalées intenses", res.getMotif());
+        verify(consultationDao).creerConsultation(100L, 200L, "Céphalées intenses", "Patient fébrile");
+    }
+
+    @Test
+    void testDemanderExpertise_US3() {
+        DemandeExpertise demande = new DemandeExpertise();
+        demande.setId(5L);
+        demande.setPriorite(Priorite.URGENTE);
+        demande.setQuestion("Avis ECG");
+
+        when(demandeExpertiseDao.envoyerDemandeExpertise(1L, 2L, 3L, "Avis ECG", Priorite.URGENTE))
+                .thenReturn(demande);
+
+        DemandeExpertise res = generalisteService.demanderExpertise(1L, 2L, 3L, "Avis ECG", Priorite.URGENTE);
+
+        assertNotNull(res);
+        assertEquals(Priorite.URGENTE, res.getPriorite());
+        assertEquals("Avis ECG", res.getQuestion());
+        verify(demandeExpertiseDao).envoyerDemandeExpertise(1L, 2L, 3L, "Avis ECG", Priorite.URGENTE);
+    }
+
+    @Test
+    void testCalculerCoutTotal_SansActesNiExpertise_US4() {
+        Consultation consultation = new Consultation();
+        consultation.setId(20L);
+        consultation.setCoutBase(150.0);
+
+        when(consultationDao.findConsultationComplete(20L)).thenReturn(consultation);
+
+        double coutTotal = generalisteService.calculerCoutTotal(20L);
+
+        // Doit être exactement le montant fixe de consultation : 150 DH
+        assertEquals(150.0, coutTotal, 0.001);
+    }
 }

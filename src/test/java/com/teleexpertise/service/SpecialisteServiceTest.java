@@ -68,4 +68,36 @@ class SpecialisteServiceTest {
         verify(creneauDao, times(1)).archiverCreneauxPasses();
         verify(creneauDao, times(1)).findBySpecialisteId(1L);
     }
+
+    @Test
+    void testConfigurerProfil() {
+        specialisteService.configurerProfil(1L, "Cardiologie", 350.0);
+        verify(utilisateurDao, times(1)).updateProfilSpecialiste(1L, "Cardiologie", 350.0);
+    }
+
+    @Test
+    void testCreerDisponibilites_IgnorerCreneauxPasses() {
+        // Pour une date passée : doit lever IllegalArgumentException
+        java.time.LocalDate datePassee = java.time.LocalDate.now().minusDays(1);
+        assertThrows(IllegalArgumentException.class, () -> {
+            specialisteService.creerDisponibilites(1L, datePassee, List.of(java.time.LocalTime.of(10, 0)));
+        });
+
+        // Pour demain : tous les créneaux futurs sont créés
+        java.time.LocalDate dateDemain = java.time.LocalDate.now().plusDays(1);
+        java.time.LocalTime heure1 = java.time.LocalTime.of(9, 0);
+        java.time.LocalTime heure2 = java.time.LocalTime.of(10, 0);
+
+        when(creneauDao.existeCreneau(eq(1L), any(java.time.LocalDateTime.class))).thenReturn(false);
+
+        int crees = specialisteService.creerDisponibilites(1L, dateDemain, List.of(heure1, heure2));
+        assertEquals(2, crees);
+        verify(creneauDao, times(2)).creerCreneau(eq(1L), any(java.time.LocalDateTime.class), any(java.time.LocalDateTime.class));
+    }
+
+    @Test
+    void testRepondreAExpertise() {
+        specialisteService.repondreAExpertise(10L, "Diagnostic cardiologique", "Traitement bêtabloquant");
+        verify(demandeExpertiseDao, times(1)).repondreAExpertise(10L, "Diagnostic cardiologique", "Traitement bêtabloquant");
+    }
 }

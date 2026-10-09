@@ -10,6 +10,7 @@ D:\tele-expertise-medicale\src\main\java\com\teleexpertise\dao\GenericDaoImpl.ja
 D:\tele-expertise-medicale\src\main\java\com\teleexpertise\dao\PatientDao.java
 D:\tele-expertise-medicale\src\main\java\com\teleexpertise\dao\SpecialisteDao.java
 D:\tele-expertise-medicale\src\main\java\com\teleexpertise\dao\UtilisateurDao.java
+D:\tele-expertise-medicale\src\main\java\com\teleexpertise\dto\CreneauHoraireDTO.java
 D:\tele-expertise-medicale\src\main\java\com\teleexpertise\filter\AuthFilter.java
 D:\tele-expertise-medicale\src\main\java\com\teleexpertise\filter\CSRFFilter.java
 D:\tele-expertise-medicale\src\main\java\com\teleexpertise\model\ActeMedical.java

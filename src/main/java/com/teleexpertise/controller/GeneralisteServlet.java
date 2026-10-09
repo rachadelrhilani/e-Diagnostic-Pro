@@ -24,12 +24,14 @@ public class GeneralisteServlet extends HttpServlet {
         SpecialisteDao specialisteDao = new SpecialisteDao();
         CreneauDao creneauDao = new CreneauDao();
         DemandeExpertiseDao demandeExpertiseDao = new DemandeExpertiseDao();
+        PatientDao patientDao = new PatientDao();
 
         this.generalisteService = new GeneralisteService(
                 consultationDao, 
                 specialisteDao, 
                 creneauDao, 
-                demandeExpertiseDao
+                demandeExpertiseDao,
+                patientDao
         );
     }
 
@@ -37,30 +39,95 @@ public class GeneralisteServlet extends HttpServlet {
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         String path = req.getPathInfo();
 
-        if ("/dashboard".equals(path)) {
+        if (path == null || "/dashboard".equals(path)) {
+            // US1: 1. Récupérer tous les patients existants pour nouvelle consultation
+            List<Patient> tousLesPatients = generalisteService.getAllPatients();
+            req.setAttribute("tousLesPatients", tousLesPatients);
+
+            // Récupérer les patients en attente
+            List<Patient> patientsEnAttente = generalisteService.getPatientsEnAttente();
+            req.setAttribute("patientsEnAttente", patientsEnAttente);
+
+            // 2. Récupérer les consultations en cours du généraliste connecté
+            Utilisateur user = (Utilisateur) req.getSession().getAttribute("user");
+            System.out.println("Utilisateur connecté : " + user);
+            if (user != null) {
+                List<Consultation> mesConsultations = generalisteService.getConsultationsEnCoursParGeneraliste(user.getId());
+                req.setAttribute("mesConsultations", mesConsultations);
+            }
+
             req.getRequestDispatcher("/WEB-INF/views/generaliste/dashboard.jsp").forward(req, resp);
+
         } else if ("/recherche-specialiste".equals(path)) {
+            // US3: Choisir une spécialité et filtrer via Stream API par spécialité et tarif
+            String consultationIdStr = req.getParameter("consultationId");
+            String fromConsultationStr = req.getParameter("fromConsultation");
+            boolean fromConsultation = "true".equalsIgnoreCase(fromConsultationStr);
+
+            Long consultationId = null;
+            if (consultationIdStr != null && !consultationIdStr.trim().isEmpty()) {
+                try {
+                    consultationId = Long.parseLong(consultationIdStr.trim());
+                    Consultation consultation = generalisteService.getConsultationComplete(consultationId);
+                    req.setAttribute("consultation", consultation);
+                    req.setAttribute("consultationId", consultationId);
+                } catch (NumberFormatException ignored) {}
+            }
+
+            Utilisateur user = (Utilisateur) req.getSession().getAttribute("user");
+            if (user != null) {
+                List<Consultation> consultationsEnCours = generalisteService.getConsultationsEnCoursParGeneraliste(user.getId());
+                req.setAttribute("consultationsEnCours", consultationsEnCours);
+            }
+            req.setAttribute("fromConsultation", fromConsultation);
+
             String specialite = req.getParameter("specialite");
             String maxTarifStr = req.getParameter("maxTarif");
-            Double maxTarif = (maxTarifStr != null && !maxTarifStr.isEmpty()) ? Double.parseDouble(maxTarifStr) : null;
+            Double maxTarif = (maxTarifStr != null && !maxTarifStr.trim().isEmpty()) ? Double.parseDouble(maxTarifStr.trim()) : null;
 
-            if (specialite != null) {
-                List<Specialiste> specialistes = generalisteService.rechercherEtTrierSpecialistes(specialite, maxTarif);
-                req.setAttribute("specialistes", specialistes);
-            }
+            List<String> specialitesDisponibles = generalisteService.getSpecialitesDisponibles();
+            req.setAttribute("specialitesDisponibles", specialitesDisponibles);
+
+            List<Specialiste> specialistes = generalisteService.rechercherEtTrierSpecialistes(specialite, maxTarif);
+            req.setAttribute("specialistes", specialistes);
+            req.setAttribute("selectedSpecialite", specialite);
+            req.setAttribute("selectedMaxTarif", maxTarif);
+
             req.getRequestDispatcher("/WEB-INF/views/generaliste/recherche_specialiste.jsp").forward(req, resp);
+
         } else if ("/creneaux".equals(path)) {
+            // US3: Voir les créneaux disponibles (horaires fixes prédéfinis)
             Long specialisteId = Long.parseLong(req.getParameter("specialisteId"));
+            String consultationIdStr = req.getParameter("consultationId");
+
+            Specialiste specialiste = generalisteService.getSpecialiste(specialisteId);
             List<Creneau> creneaux = generalisteService.getCreneauxDisponibles(specialisteId);
+
+            if (consultationIdStr != null && !consultationIdStr.trim().isEmpty()) {
+                Long consultationId = Long.parseLong(consultationIdStr.trim());
+                Consultation consultation = generalisteService.getConsultationComplete(consultationId);
+                req.setAttribute("consultation", consultation);
+                req.setAttribute("consultationId", consultationId);
+            }
+
+            req.setAttribute("specialiste", specialiste);
             req.setAttribute("creneaux", creneaux);
             req.setAttribute("specialisteId", specialisteId);
-            req.setAttribute("consultationId", req.getParameter("consultationId"));
+
             req.getRequestDispatcher("/WEB-INF/views/generaliste/choix_creneau.jsp").forward(req, resp);
-        } else if ("/detail-consultation".equals(path)) {
+
+        } else if ("/detail-consultation".equals(path) || "/consultation".equals(path)) {
+            // US1, US3, US4: Détail complet de la consultation & Coût total (Lambda map().sum())
             Long consultationId = Long.parseLong(req.getParameter("id"));
+            Consultation consultation = generalisteService.getConsultationComplete(consultationId);
             double coutTotal = generalisteService.calculerCoutTotal(consultationId);
+
+            req.setAttribute("consultation", consultation);
             req.setAttribute("coutTotal", coutTotal);
+
             req.getRequestDispatcher("/WEB-INF/views/generaliste/detail_consultation.jsp").forward(req, resp);
+        } else {
+            resp.sendRedirect(req.getContextPath() + "/generaliste/dashboard");
         }
     }
 
@@ -70,12 +137,18 @@ public class GeneralisteServlet extends HttpServlet {
         Utilisateur user = (Utilisateur) req.getSession().getAttribute("user");
 
         if ("/creer-consultation".equals(action)) {
+            // US1: Créer une consultation (Sélectionner patient, saisir motif/obs, coût fixe 150 DH)
             Long patientId = Long.parseLong(req.getParameter("patientId"));
             String motif = req.getParameter("motif");
             String observations = req.getParameter("observations");
 
-            Consultation c = generalisteService.creerConsultation(patientId, user.getId(), motif, observations);
-            resp.sendRedirect(req.getContextPath() + "/generaliste/consultation?id=" + c.getId());
+            try {
+                Consultation c = generalisteService.creerConsultation(patientId, user.getId(), motif, observations);
+                resp.sendRedirect(req.getContextPath() + "/generaliste/detail-consultation?id=" + c.getId() + "&msg=Consultation+initialisee+(150+DH)");
+            } catch (IllegalStateException e) {
+                resp.sendRedirect(req.getContextPath() + "/generaliste/dashboard?error=" +
+                        java.net.URLEncoder.encode(e.getMessage(), "UTF-8"));
+            }
 
         } else if ("/cloturer-directe".equals(action)) {
             Long consultationId = Long.parseLong(req.getParameter("consultationId"));
@@ -83,25 +156,38 @@ public class GeneralisteServlet extends HttpServlet {
             String traitement = req.getParameter("traitement");
 
             generalisteService.cloturerConsultationDirecte(consultationId, diagnostic, traitement);
-            resp.sendRedirect(req.getContextPath() + "/generaliste/dashboard?msg=Consultation+terminee");
+            resp.sendRedirect(req.getContextPath() + "/generaliste/detail-consultation?id=" + consultationId + "&msg=Consultation+cloturee+avec+succes");
 
         } else if ("/envoyer-demande-expertise".equals(action)) {
+            // US3: Sélectionner un créneau, poser une question au spécialiste et fournir données & analyses
             Long consultationId = Long.parseLong(req.getParameter("consultationId"));
             Long specialisteId = Long.parseLong(req.getParameter("specialisteId"));
             Long creneauId = Long.parseLong(req.getParameter("creneauId"));
             String question = req.getParameter("question");
-            Priorite priorite = Priorite.valueOf(req.getParameter("priorite"));
+            String donneesAnalyses = req.getParameter("donneesAnalyses");
+
+            if (donneesAnalyses != null && !donneesAnalyses.trim().isEmpty()) {
+                question = question + "\n\n[Données cliniques & analyses fournies] :\n" + donneesAnalyses.trim();
+            }
+
+            String prioriteStr = req.getParameter("priorite");
+            Priorite priorite = (prioriteStr != null && !prioriteStr.trim().isEmpty())
+                    ? Priorite.valueOf(prioriteStr.trim())
+                    : Priorite.NORMALE;
 
             generalisteService.demanderExpertise(consultationId, specialisteId, creneauId, question, priorite);
-            resp.sendRedirect(req.getContextPath() + "/generaliste/dashboard?msg=Demande+d+expertise+envoyee");
+            resp.sendRedirect(req.getContextPath() + "/generaliste/detail-consultation?id=" + consultationId + "&msg=Demande+de+tele-expertise+envoyee+au+specialiste");
 
         } else if ("/ajouter-acte".equals(action)) {
+            // US4: Ajouter un acte technique médical pour calcul du coût total
             Long consultationId = Long.parseLong(req.getParameter("consultationId"));
             String nomActe = req.getParameter("nomActe");
             double tarifActe = Double.parseDouble(req.getParameter("tarifActe"));
 
             generalisteService.ajouterActeMedical(consultationId, new ActeMedical(nomActe, tarifActe));
-            resp.sendRedirect(req.getContextPath() + "/generaliste/detail-consultation?id=" + consultationId);
+            resp.sendRedirect(req.getContextPath() + "/generaliste/detail-consultation?id=" + consultationId + "&msg=Acte+technique+ajoute+au+dossier");
+        } else {
+            resp.sendRedirect(req.getContextPath() + "/generaliste/dashboard");
         }
     }
 }

@@ -104,21 +104,36 @@ public class ConsultationDao extends GenericDaoImpl<Consultation, Long> {
     }
 
     /**
-     * Charger une consultation complète avec ses actes techniques et sa demande
-     * d'expertise (pour calcul du coût total)
+     * Charger une consultation complète avec son patient, ses signes vitaux, ses
+     * actes techniques
+     * et sa demande d'expertise (pour affichage complet et calcul du coût total
+     * US4)
      */
     public Consultation findConsultationComplete(Long consultationId) {
         EntityManager em = JPAUtil.getEntityManager();
         try {
-            return em.createQuery(
+            Consultation consultation = em.createQuery(
                     "SELECT DISTINCT c FROM Consultation c " +
+                            "JOIN FETCH c.patient p " +
+                            "JOIN FETCH c.generaliste g " +
                             "LEFT JOIN FETCH c.actesMedicaux " +
                             "LEFT JOIN FETCH c.demandeExpertise d " +
                             "LEFT JOIN FETCH d.specialiste " +
+                            "LEFT JOIN FETCH d.creneau " +
                             "WHERE c.id = :id",
                     Consultation.class)
                     .setParameter("id", consultationId)
                     .getSingleResult();
+
+            // Initialiser les signes vitaux du patient dans la même session JPA
+            if (consultation != null && consultation.getPatient() != null
+                    && consultation.getPatient().getSignesVitaux() != null) {
+                consultation.getPatient().getSignesVitaux().size();
+            }
+
+            return consultation;
+        } catch (jakarta.persistence.NoResultException e) {
+            return null;
         } finally {
             em.close();
         }
@@ -146,4 +161,32 @@ public class ConsultationDao extends GenericDaoImpl<Consultation, Long> {
             em.close();
         }
     }
+
+    public List<Consultation> findConsultationsEnCoursParGeneraliste(Long generalisteId) {
+    EntityManager em = JPAUtil.getEntityManager();
+    try {
+        List<StatutConsultation> statutsActifs = Arrays.asList(
+            StatutConsultation.EN_COURS,
+            StatutConsultation.EN_ATTENTE_AVIS_SPECIALISTE
+        );
+
+        // Les LEFT JOIN FETCH garantissent que toutes les collections nécessaires 
+        // au calcul de coutTotal sont chargées en mémoire
+        return em.createQuery(
+                "SELECT DISTINCT c FROM Consultation c " +
+                "JOIN FETCH c.patient p " +
+                "LEFT JOIN FETCH c.actesMedicaux " +
+                "LEFT JOIN FETCH c.demandeExpertise d " +
+                "LEFT JOIN FETCH d.specialiste " +
+                "WHERE c.generaliste.id = :generalisteId " +
+                "AND c.statut IN :statutsActifs " +
+                "ORDER BY c.id DESC",
+                Consultation.class)
+                .setParameter("generalisteId", generalisteId)
+                .setParameter("statutsActifs", statutsActifs)
+                .getResultList();
+    } finally {
+        em.close();
+    }
+}
 }

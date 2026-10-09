@@ -107,4 +107,62 @@ public class DemandeExpertiseDao extends GenericDaoImpl<DemandeExpertise, Long> 
             em.close();
         }
     }
+
+    /**
+     * US7 / US8: Récupérer une demande d'expertise complète avec patient, consultation, généraliste, créneau et signes vitaux
+     */
+    public DemandeExpertise findDemandeComplete(Long demandeId) {
+    EntityManager em = JPAUtil.getEntityManager();
+    try {
+        return em.createQuery(
+            "SELECT DISTINCT d FROM DemandeExpertise d " +
+            "JOIN FETCH d.consultation c " +
+            "JOIN FETCH c.patient p " +
+            "JOIN FETCH c.generaliste g " +
+            "LEFT JOIN FETCH d.creneau " +
+            "LEFT JOIN FETCH p.signesVitaux " +
+            "WHERE d.id = :id", DemandeExpertise.class)
+            .setParameter("id", demandeId)
+            .getSingleResult();
+    } catch (jakarta.persistence.NoResultException e) {
+        return null;
+    } finally {
+        em.close();
+    }
+}
+
+    /**
+     * US6: Annulation d'une demande d'expertise : le créneau redevient disponible
+     */
+    public void annulerDemandeExpertise(Long demandeId) {
+        EntityManager em = JPAUtil.getEntityManager();
+        EntityTransaction tx = em.getTransaction();
+        try {
+            tx.begin();
+            DemandeExpertise demande = em.find(DemandeExpertise.class, demandeId);
+            if (demande != null) {
+                demande.setStatut(StatutExpertise.ANNULEE);
+                if (demande.getCreneau() != null) {
+                    // Si le créneau n'est pas encore passé, il redevient DISPONIBLE
+                    if (demande.getCreneau().getHeureFin().isAfter(LocalDateTime.now())) {
+                        demande.getCreneau().setStatut(StatutCreneau.DISPONIBLE);
+                    } else {
+                        demande.getCreneau().setStatut(StatutCreneau.ARCHIVE);
+                    }
+                    em.merge(demande.getCreneau());
+                }
+                if (demande.getConsultation() != null) {
+                    demande.getConsultation().setStatut(StatutConsultation.EN_COURS);
+                    em.merge(demande.getConsultation());
+                }
+                em.merge(demande);
+            }
+            tx.commit();
+        } catch (Exception e) {
+            if (tx.isActive()) tx.rollback();
+            throw e;
+        } finally {
+            em.close();
+        }
+    }
 }

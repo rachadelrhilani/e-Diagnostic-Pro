@@ -18,9 +18,26 @@ public class SpecialisteDao extends GenericDaoImpl<Specialiste, Long> {
     public List<Specialiste> findBySpecialite(String specialite) {
         EntityManager em = JPAUtil.getEntityManager();
         try {
+            if (specialite == null || specialite.trim().isEmpty() || "ALL".equalsIgnoreCase(specialite.trim()) || "TOUTES".equalsIgnoreCase(specialite.trim())) {
+                return em.createQuery("SELECT s FROM Specialiste s", Specialiste.class).getResultList();
+            }
             return em.createQuery(
-                "SELECT s FROM Specialiste s WHERE LOWER(s.specialite) = LOWER(:specialite)", Specialiste.class)
-                .setParameter("specialite", specialite)
+                "SELECT s FROM Specialiste s WHERE LOWER(s.specialite) LIKE LOWER(:specialite)", Specialiste.class)
+                .setParameter("specialite", "%" + specialite.trim() + "%")
+                .getResultList();
+        } finally {
+            em.close();
+        }
+    }
+
+    /**
+     * Récupérer la liste de toutes les spécialités distinctes existantes
+     */
+    public List<String> findDistinctSpecialites() {
+        EntityManager em = JPAUtil.getEntityManager();
+        try {
+            return em.createQuery(
+                "SELECT DISTINCT s.specialite FROM Specialiste s WHERE s.specialite IS NOT NULL AND TRIM(s.specialite) != '' ORDER BY s.specialite ASC", String.class)
                 .getResultList();
         } finally {
             em.close();

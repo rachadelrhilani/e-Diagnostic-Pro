@@ -2,6 +2,7 @@ com\teleexpertise\dao\GenericDaoImpl.class
 com\teleexpertise\dao\CreneauDao.class
 com\teleexpertise\model\Generaliste.class
 com\teleexpertise\dao\UtilisateurDao.class
+com\teleexpertise\dto\CreneauHoraireDTO.class
 com\teleexpertise\model\Infirmier.class
 com\teleexpertise\model\DemandeExpertise.class
 com\teleexpertise\service\SpecialisteService.class

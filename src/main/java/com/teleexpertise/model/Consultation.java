@@ -50,57 +50,140 @@ public class Consultation implements Serializable {
     @OneToMany(mappedBy = "consultation", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ActeMedical> actesMedicaux = new ArrayList<>();
 
-    public Consultation() {}
+    public Consultation() {
+    }
 
     /**
      * Calcul du coût total à l'aide des expressions Lambda (map().sum())
      */
+    @Transient
     public double getCoutTotal() {
-        double totalActes = actesMedicaux.stream()
-                .mapToDouble(ActeMedical::getTarif)
-                .sum();
+        // coutBase est un type primitif (double), donc pas besoin de tester != null
+        return coutBase + getTarifExpertise() + getTotalActesMedicaux();
+    }
 
-        double tarifExpertise = (demandeExpertise != null && demandeExpertise.getSpecialiste() != null)
-                ? demandeExpertise.getSpecialiste().getTarif()
-                : 0.0;
+    @Transient
+    public double getTotalActesMedicaux() {
+        try {
+            if (actesMedicaux == null || actesMedicaux.isEmpty()) {
+                return 0.0;
+            }
+            return actesMedicaux.stream()
+                    .filter(a -> a != null)
+                    .mapToDouble(a -> a.getTarif() != 0.0 ? a.getTarif() : 0.0)
+                    .sum();
+        } catch (Exception e) {
+            return 0.0;
+        }
+    }
 
-        return coutBase + tarifExpertise + totalActes;
+    @Transient
+    public double getTarifExpertise() {
+        try {
+            if (demandeExpertise != null
+                    && demandeExpertise.getSpecialiste() != null) {
+                return demandeExpertise.getSpecialiste().getTarif();
+            }
+            return 0.0;
+        } catch (Exception e) {
+            return 0.0;
+        }
     }
 
     // Getters et Setters
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
+    public Long getId() {
+        return id;
+    }
 
-    public LocalDateTime getDateConsultation() { return dateConsultation; }
-    public void setDateConsultation(LocalDateTime dateConsultation) { this.dateConsultation = dateConsultation; }
+    public void setId(Long id) {
+        this.id = id;
+    }
 
-    public String getMotif() { return motif; }
-    public void setMotif(String motif) { this.motif = motif; }
+    public LocalDateTime getDateConsultation() {
+        return dateConsultation;
+    }
 
-    public String getObservations() { return observations; }
-    public void setObservations(String observations) { this.observations = observations; }
+    public void setDateConsultation(LocalDateTime dateConsultation) {
+        this.dateConsultation = dateConsultation;
+    }
 
-    public String getDiagnostic() { return diagnostic; }
-    public void setDiagnostic(String diagnostic) { this.diagnostic = diagnostic; }
+    public String getMotif() {
+        return motif;
+    }
 
-    public String getTraitement() { return traitement; }
-    public void setTraitement(String traitement) { this.traitement = traitement; }
+    public void setMotif(String motif) {
+        this.motif = motif;
+    }
 
-    public double getCoutBase() { return coutBase; }
-    public void setCoutBase(double coutBase) { this.coutBase = coutBase; }
+    public String getObservations() {
+        return observations;
+    }
 
-    public StatutConsultation getStatut() { return statut; }
-    public void setStatut(StatutConsultation statut) { this.statut = statut; }
+    public void setObservations(String observations) {
+        this.observations = observations;
+    }
 
-    public Patient getPatient() { return patient; }
-    public void setPatient(Patient patient) { this.patient = patient; }
+    public String getDiagnostic() {
+        return diagnostic;
+    }
 
-    public Generaliste getGeneraliste() { return generaliste; }
-    public void setGeneraliste(Generaliste generaliste) { this.generaliste = generaliste; }
+    public void setDiagnostic(String diagnostic) {
+        this.diagnostic = diagnostic;
+    }
 
-    public DemandeExpertise getDemandeExpertise() { return demandeExpertise; }
-    public void setDemandeExpertise(DemandeExpertise demandeExpertise) { this.demandeExpertise = demandeExpertise; }
+    public String getTraitement() {
+        return traitement;
+    }
 
-    public List<ActeMedical> getActesMedicaux() { return actesMedicaux; }
-    public void setActesMedicaux(List<ActeMedical> actesMedicaux) { this.actesMedicaux = actesMedicaux; }
+    public void setTraitement(String traitement) {
+        this.traitement = traitement;
+    }
+
+    public double getCoutBase() {
+        return coutBase;
+    }
+
+    public void setCoutBase(double coutBase) {
+        this.coutBase = coutBase;
+    }
+
+    public StatutConsultation getStatut() {
+        return statut;
+    }
+
+    public void setStatut(StatutConsultation statut) {
+        this.statut = statut;
+    }
+
+    public Patient getPatient() {
+        return patient;
+    }
+
+    public void setPatient(Patient patient) {
+        this.patient = patient;
+    }
+
+    public Generaliste getGeneraliste() {
+        return generaliste;
+    }
+
+    public void setGeneraliste(Generaliste generaliste) {
+        this.generaliste = generaliste;
+    }
+
+    public DemandeExpertise getDemandeExpertise() {
+        return demandeExpertise;
+    }
+
+    public void setDemandeExpertise(DemandeExpertise demandeExpertise) {
+        this.demandeExpertise = demandeExpertise;
+    }
+
+    public List<ActeMedical> getActesMedicaux() {
+        return actesMedicaux;
+    }
+
+    public void setActesMedicaux(List<ActeMedical> actesMedicaux) {
+        this.actesMedicaux = actesMedicaux;
+    }
 }

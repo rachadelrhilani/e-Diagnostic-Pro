@@ -47,25 +47,46 @@
 </div>
 
 <!-- Section Liste des Demandes de Télé-expertise -->
+<!-- Alertes -->
+<c:if test="${not empty param.msg}">
+    <div class="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-sm flex items-center gap-2 shadow-lg shadow-emerald-500/5 mb-6">
+        <span>✅</span> <span>${param.msg}</span>
+    </div>
+</c:if>
+<c:if test="${not empty param.error}">
+    <div class="p-4 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-sm flex items-center gap-2 shadow-lg shadow-rose-500/5 mb-6">
+        <span>⚠️</span> <span>${param.error}</span>
+    </div>
+</c:if>
+
 <div class="rounded-2xl bg-slate-800/40 border border-slate-700/50 p-6 backdrop-blur-md">
     <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
-        <h2 class="text-lg font-bold text-white flex items-center gap-2">
-            <span>🩺</span> Demandes d'expertise reçues
-        </h2>
+        <div>
+            <h2 class="text-lg font-bold text-white flex items-center gap-2">
+                <span>🩺</span> Demandes d'expertise reçues (US7)
+            </h2>
+            <p class="text-xs text-slate-400 mt-0.5">Filtrage instantané via Java Stream API par statut et priorité.</p>
+        </div>
 
-        <!-- Formulaire de filtrage par Statut et Priorité -->
+        <!-- Formulaire de filtrage par Statut et Priorité (Stream API) -->
         <form action="${pageContext.request.contextPath}/specialiste/dashboard" method="get" class="flex flex-wrap items-center gap-3">
             <select name="statut" onchange="this.form.submit()" class="bg-slate-900 border border-slate-700 text-xs text-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:border-indigo-500">
                 <option value="">Tous les statuts</option>
                 <option value="EN_ATTENTE" ${param.statut == 'EN_ATTENTE' ? 'selected' : ''}>En attente</option>
-                <option value="TERMINEE" ${param.statut == 'REPONDUE' ? 'selected' : ''}>Répondues</option>
+                <option value="TERMINEE" ${param.statut == 'TERMINEE' ? 'selected' : ''}>Répondues / Terminées</option>
             </select>
 
             <select name="priorite" onchange="this.form.submit()" class="bg-slate-900 border border-slate-700 text-xs text-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:border-indigo-500">
                 <option value="">Toutes priorités</option>
-                <option value="URGENTE" ${param.priorite == 'URGENT' ? 'selected' : ''}>Urgent</option>
+                <option value="URGENTE" ${param.priorite == 'URGENTE' ? 'selected' : ''}>Urgent</option>
                 <option value="NORMALE" ${param.priorite == 'NORMALE' ? 'selected' : ''}>Normale</option>
             </select>
+
+            <c:if test="${not empty param.statut || not empty param.priorite}">
+                <a href="${pageContext.request.contextPath}/specialiste/dashboard" class="text-xs text-indigo-400 hover:text-indigo-300 transition">
+                    Réinitialiser
+                </a>
+            </c:if>
         </form>
     </div>
 
@@ -75,7 +96,9 @@
                 <table class="w-full text-left text-sm text-slate-300">
                     <thead class="text-xs uppercase bg-slate-700/40 text-slate-400 border-b border-slate-700/50">
                         <tr>
-                            <th class="px-4 py-3 rounded-l-xl">Médecin Généraliste</th>
+                            <th class="px-4 py-3 rounded-l-xl">Patient (US7)</th>
+                            <th class="px-4 py-3">Médecin Généraliste</th>
+                            <th class="px-4 py-3">Question posée (US7)</th>
                             <th class="px-4 py-3">Priorité</th>
                             <th class="px-4 py-3">Date Demande</th>
                             <th class="px-4 py-3">Statut</th>
@@ -85,10 +108,27 @@
                     <tbody class="divide-y divide-slate-700/30">
                         <c:forEach var="demande" items="${demandes}">
                             <tr class="hover:bg-slate-700/20 transition">
-                                <!-- Récupération du Généraliste via la Consultation associée -->
-                                <td class="px-4 py-4 font-medium text-white">
+                                <!-- Détails du patient (US7) -->
+                                <td class="px-4 py-4">
+                                    <div class="font-medium text-white">
+                                        ${demande.consultation.patient.nom} ${demande.consultation.patient.prenom}
+                                    </div>
+                                    <div class="text-[11px] font-mono text-slate-400">
+                                        NSS: ${demande.consultation.patient.numeroSecuriteSociale}
+                                    </div>
+                                </td>
+
+                                <!-- Médecin Généraliste -->
+                                <td class="px-4 py-4 text-slate-300">
                                     Dr. ${demande.consultation.generaliste.prenom} ${demande.consultation.generaliste.nom}
                                 </td>
+
+                                <!-- Question posée (US7) -->
+                                <td class="px-4 py-4 max-w-xs truncate text-xs text-slate-300" title="${demande.question}">
+                                    ${demande.question}
+                                </td>
+
+                                <!-- Priorité -->
                                 <td class="px-4 py-4">
                                     <c:choose>
                                         <c:when test="${demande.priorite == 'URGENTE'}">
@@ -99,9 +139,13 @@
                                         </c:otherwise>
                                     </c:choose>
                                 </td>
-                                <td class="px-4 py-4 text-slate-400">
+
+                                <!-- Date demande -->
+                                <td class="px-4 py-4 text-xs text-slate-400">
                                     ${demande.dateDemande}
                                 </td>
+
+                                <!-- Statut -->
                                 <td class="px-4 py-4">
                                     <c:choose>
                                         <c:when test="${demande.statut == 'EN_ATTENTE'}">
@@ -115,10 +159,12 @@
                                         </c:otherwise>
                                     </c:choose>
                                 </td>
+
+                                <!-- Action : Examiner (US7 / US8) -->
                                 <td class="px-4 py-4 text-right">
                                     <a href="${pageContext.request.contextPath}/specialiste/expertise?id=${demande.id}" 
-                                       class="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold transition inline-block">
-                                        Examiner
+                                       class="px-3.5 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold transition inline-flex items-center gap-1 shadow-md shadow-indigo-600/20">
+                                        <span>Examiner</span> ➔
                                     </a>
                                 </td>
                             </tr>
