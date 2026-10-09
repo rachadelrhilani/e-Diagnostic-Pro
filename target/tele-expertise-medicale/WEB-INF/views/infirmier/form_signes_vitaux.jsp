@@ -18,6 +18,33 @@
 
     <!-- Formulaire Prise de Constantes -->
     <div class="p-8 rounded-2xl bg-slate-800/40 border border-slate-700/50 backdrop-blur-md shadow-xl">
+        <c:choose>
+            <c:when test="${not empty consultationActive}">
+                <div class="p-5 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-start gap-3">
+                    <span class="text-2xl">🔒</span>
+                    <div>
+                        <p class="text-amber-300 font-semibold text-sm">Patient déjà en consultation</p>
+                        <p class="text-slate-300 text-xs mt-1">
+                            ${patient.prenom} ${patient.nom} a déjà une consultation
+                            <c:choose>
+                                <c:when test="${consultationActive.statut == 'EN_ATTENTE_AVIS_SPECIALISTE'}">
+                                    <strong class="text-purple-300">en attente de l'avis spécialiste</strong>
+                                </c:when>
+                                <c:otherwise>
+                                    <strong class="text-amber-300">en cours</strong>
+                                </c:otherwise>
+                            </c:choose>
+                            (Dossier #${consultationActive.id}).
+                            Inutile de reprendre les constantes ou de le réassigner.
+                        </p>
+                        <a href="${pageContext.request.contextPath}/infirmier/dashboard"
+                           class="inline-block mt-3 px-4 py-2 rounded-xl bg-slate-700 hover:bg-slate-600 text-white text-xs font-semibold transition">
+                            ⬅ Retour à la file d'attente
+                        </a>
+                    </div>
+                </div>
+            </c:when>
+            <c:otherwise>
         <h3 class="text-lg font-bold text-white mb-6 flex items-center gap-2">
             <span>🩺</span> Prise des Signes Vitaux du Jour
         </h3>
@@ -57,5 +84,7 @@
                 Valider et envoyer en salle d'attente
             </button>
         </form>
+            </c:otherwise>
+        </c:choose>
     </div>
 </div>

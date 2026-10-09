@@ -51,8 +51,8 @@
         </div>
 
         <c:choose>
-            <%-- Consultation déjà en cours : bloquer la création --%>
-            <c:when test="${not empty mesConsultations}">
+            <%-- Consultation EN_COURS : bloquer la création (EN_ATTENTE_AVIS ne bloque pas) --%>
+            <c:when test="${not empty consultationBlocante}">
                 <div class="p-5 rounded-xl bg-amber-500/10 border border-amber-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div class="flex items-start gap-3">
                         <span class="text-2xl mt-0.5">🔒</span>
@@ -60,13 +60,13 @@
                             <p class="text-amber-300 font-semibold text-sm">Consultation déjà en cours</p>
                             <p class="text-slate-400 text-xs mt-0.5">
                                 Vous avez déjà une consultation active pour
-                                <strong class="text-white">${mesConsultations[0].patient.nom} ${mesConsultations[0].patient.prenom}</strong>
-                                (Dossier #${mesConsultations[0].id}).
+                                <strong class="text-white">${consultationBlocante.patient.nom} ${consultationBlocante.patient.prenom}</strong>
+                                (Dossier #${consultationBlocante.id}).
                                 Clôturez-la avant d'en démarrer une nouvelle.
                             </p>
                         </div>
                     </div>
-                    <a href="${pageContext.request.contextPath}/generaliste/detail-consultation?id=${mesConsultations[0].id}"
+                    <a href="${pageContext.request.contextPath}/generaliste/detail-consultation?id=${consultationBlocante.id}"
                        class="whitespace-nowrap inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-900 font-semibold text-xs transition shadow-md shadow-amber-500/20">
                         <span>📂</span> Ouvrir la consultation en cours ➔
                     </a>

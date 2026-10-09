@@ -53,6 +53,7 @@ public class InfirmierServlet extends HttpServlet {
             req.setAttribute("patients", patientsFiltres);
             req.setAttribute("dateSelectionnee", dateRecherche);
             req.setAttribute("listeGeneralistes", generalistes);
+            req.setAttribute("generalistesOccupes", infirmierService.getIdsGeneralistesOccupes());
 
             req.getRequestDispatcher("/WEB-INF/views/infirmier/dashboard.jsp").forward(req, resp);
 
@@ -73,7 +74,10 @@ public class InfirmierServlet extends HttpServlet {
             Optional<Patient> patientOpt = infirmierService.rechercherPatientParNss(nss);
 
             if (patientOpt.isPresent()) {
-                req.setAttribute("patient", patientOpt.get());
+                Patient patient = patientOpt.get();
+                req.setAttribute("patient", patient);
+                // Si le patient a déjà une consultation EN_COURS ou EN_ATTENTE_AVIS, on l'affiche
+                req.setAttribute("consultationActive", infirmierService.getConsultationActivePatient(patient.getId()));
                 req.getRequestDispatcher("/WEB-INF/views/infirmier/form_signes_vitaux.jsp").forward(req, resp);
             } else {
                 req.setAttribute("nssSaisi", nss);

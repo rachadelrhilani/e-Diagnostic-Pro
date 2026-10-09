@@ -74,6 +74,7 @@
                 <option value="">Tous les statuts</option>
                 <option value="EN_ATTENTE" ${param.statut == 'EN_ATTENTE' ? 'selected' : ''}>En attente</option>
                 <option value="TERMINEE" ${param.statut == 'TERMINEE' ? 'selected' : ''}>Répondues / Terminées</option>
+                <option value="ANNULEE" ${param.statut == 'ANNULEE' ? 'selected' : ''}>Annulées</option>
             </select>
 
             <select name="priorite" onchange="this.form.submit()" class="bg-slate-900 border border-slate-700 text-xs text-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:border-indigo-500">
@@ -153,6 +154,9 @@
                                         </c:when>
                                         <c:when test="${demande.statut == 'TERMINEE'}">
                                             <span class="px-2.5 py-1 text-xs rounded-lg bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-medium">Répondue</span>
+                                        </c:when>
+                                        <c:when test="${demande.statut == 'ANNULEE'}">
+                                            <span class="px-2.5 py-1 text-xs rounded-lg bg-rose-500/20 text-rose-300 border border-rose-500/30 font-medium">Annulée</span>
                                         </c:when>
                                         <c:otherwise>
                                             <span class="px-2.5 py-1 text-xs rounded-lg bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 font-medium">${demande.statut}</span>

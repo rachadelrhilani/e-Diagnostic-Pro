@@ -155,6 +155,14 @@ public class SpecialisteService {
     }
 
     /**
+     * US8: Annuler un avis déjà rendu : la demande passe à ANNULEE,
+     * le créneau redevient automatiquement DISPONIBLE et la consultation est rouverte.
+     */
+    public void annulerAvis(Long demandeId) {
+        demandeExpertiseDao.annulerAvis(demandeId);
+    }
+
+    /**
      * US7: Consulter les demandes reçues filtrées via Stream API
      */
     public List<DemandeExpertise> consulterDemandesFiltrees(Long specialisteId, StatutExpertise statut, Priorite priorite) {
@@ -175,7 +183,8 @@ public class SpecialisteService {
     }
 
     /**
-     * US8: Saisir l'avis médical, les recommandations et marquer comme terminée
+     * US8: Saisir l'avis médical, les recommandations et marquer comme terminée.
+     * Règle métier : la consultation liée passe automatiquement à TERMINEE.
      */
     public void repondreAExpertise(Long demandeId, String avisMedical, String recommandations) {
         demandeExpertiseDao.repondreAExpertise(demandeId, avisMedical, recommandations);

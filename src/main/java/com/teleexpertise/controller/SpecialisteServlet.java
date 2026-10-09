@@ -206,15 +206,18 @@ public class SpecialisteServlet extends HttpServlet {
             }
 
         } else if ("/annuler-expertise".equals(action)) {
-            // US6: Annuler une expertise -> le créneau redevient disponible
+            // US6/US8: Annuler une demande en attente ou un avis déjà rendu -> créneau libéré
             try {
                 Long demandeId = Long.parseLong(req.getParameter("demandeId"));
                 specialisteService.annulerDemandeExpertise(demandeId);
-                resp.sendRedirect(req.getContextPath() + "/specialiste/dashboard?msg=" +
-                        URLEncoder.encode("Demande annulée. Le créneau est de nouveau disponible.", StandardCharsets.UTF_8));
+                resp.sendRedirect(req.getContextPath() + "/specialiste/expertise?id=" + demandeId + "&msg=" +
+                        URLEncoder.encode("Avis annulé. Le créneau est de nouveau disponible.", StandardCharsets.UTF_8));
             } catch (Exception e) {
-                resp.sendRedirect(req.getContextPath() + "/specialiste/dashboard?error=" +
-                        URLEncoder.encode("Erreur : " + e.getMessage(), StandardCharsets.UTF_8));
+                String fallback = req.getParameter("demandeId");
+                String target = (fallback != null && !fallback.trim().isEmpty())
+                        ? req.getContextPath() + "/specialiste/expertise?id=" + fallback.trim() + "&error="
+                        : req.getContextPath() + "/specialiste/dashboard?error=";
+                resp.sendRedirect(target + URLEncoder.encode("Erreur : " + e.getMessage(), StandardCharsets.UTF_8));
             }
 
         } else if ("/repondre-expertise".equals(action)) {

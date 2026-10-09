@@ -47,6 +47,11 @@
                         ✅ Expertise Terminée
                     </span>
                 </c:when>
+                <c:when test="${demande.statut == 'ANNULEE'}">
+                    <span class="px-3 py-1.5 rounded-xl bg-rose-500/20 text-rose-300 border border-rose-500/30 text-xs font-bold">
+                        ❌ Avis annulé — créneau libéré
+                    </span>
+                </c:when>
                 <c:otherwise>
                     <span class="px-3 py-1.5 rounded-xl bg-slate-700 text-slate-300 text-xs font-semibold">
                         ${demande.statut}
@@ -224,6 +229,18 @@
             <!-- US8 : Répondre à l'expertise -->
             <div class="rounded-2xl bg-slate-800/40 border border-slate-700/50 p-6 md:p-8 backdrop-blur-md shadow-xl">
                 <c:choose>
+                    <c:when test="${demande.statut == 'ANNULEE'}">
+                        <div class="p-5 rounded-xl bg-rose-500/10 border border-rose-500/30 flex items-start gap-3">
+                            <span class="text-2xl">❌</span>
+                            <div>
+                                <p class="text-rose-300 font-semibold text-sm">Avis annulé</p>
+                                <p class="text-slate-300 text-xs mt-1">
+                                    Cette demande a été annulée et le créneau est redevenu automatiquement disponible.
+                                    La consultation a été rouverte côté généraliste.
+                                </p>
+                            </div>
+                        </div>
+                    </c:when>
                     <c:when test="${demande.statut == 'TERMINEE'}">
                         <div class="flex items-center justify-between mb-4 pb-3 border-b border-slate-700/50">
                             <h2 class="text-lg font-bold text-emerald-400 flex items-center gap-2">
@@ -255,6 +272,17 @@
                                 </div>
                             </c:if>
                         </div>
+
+                        <form action="${pageContext.request.contextPath}/specialiste/annuler-expertise" method="post" class="mt-5 pt-4 border-t border-slate-700/50 flex items-center justify-between gap-3"
+                              onsubmit="return confirm('Annuler cet avis ? Le créneau redeviendra automatiquement disponible.');">
+                            <input type="hidden" name="_csrf" value="${csrfToken}" />
+                            <input type="hidden" name="demandeId" value="${demande.id}" />
+                            <span class="text-xs text-slate-400">Une erreur dans l'avis ? Annulez-le pour libérer le créneau.</span>
+                            <button type="submit"
+                                    class="px-5 py-2.5 rounded-xl bg-rose-600/20 hover:bg-rose-600/30 text-rose-300 border border-rose-500/30 font-semibold text-xs transition flex items-center gap-2 whitespace-nowrap">
+                                <span>❌</span> Annuler cet avis
+                            </button>
+                        </form>
                     </c:when>
 
                     <c:otherwise>
@@ -294,11 +322,23 @@
                                     <span>💡</span> L'enregistrement marque définitivement la télé-expertise comme <strong>terminée</strong>.
                                 </span>
 
-                                <button type="submit" 
-                                        class="px-6 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-sm shadow-lg shadow-emerald-600/30 transition flex items-center gap-2">
-                                    <span>✅</span> Transmettre l'avis et terminer
-                                </button>
+                                <div class="flex items-center gap-3">
+                                    <button type="submit" 
+                                            class="px-6 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-sm shadow-lg shadow-emerald-600/30 transition flex items-center gap-2">
+                                        <span>✅</span> Transmettre l'avis et terminer
+                                    </button>
+                                </div>
                             </div>
+                        </form>
+
+                        <form action="${pageContext.request.contextPath}/specialiste/annuler-expertise" method="post" class="mt-4 flex items-center justify-end"
+                              onsubmit="return confirm('Refuser cette demande ? Le créneau redeviendra automatiquement disponible.');">
+                            <input type="hidden" name="_csrf" value="${csrfToken}" />
+                            <input type="hidden" name="demandeId" value="${demande.id}" />
+                            <button type="submit"
+                                    class="px-4 py-2 rounded-xl bg-transparent hover:bg-rose-500/10 text-rose-400/80 hover:text-rose-300 text-xs font-medium transition flex items-center gap-1.5">
+                                <span>❌</span> Refuser / Annuler la demande
+                            </button>
                         </form>
                     </c:otherwise>
                 </c:choose>

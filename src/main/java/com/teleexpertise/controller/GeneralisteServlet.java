@@ -52,8 +52,12 @@ public class GeneralisteServlet extends HttpServlet {
             Utilisateur user = (Utilisateur) req.getSession().getAttribute("user");
             System.out.println("Utilisateur connecté : " + user);
             if (user != null) {
+                // Toutes les actives (EN_COURS + EN_ATTENTE) pour le tableau,
+                // et uniquement EN_COURS pour le blocage du formulaire de création
                 List<Consultation> mesConsultations = generalisteService.getConsultationsEnCoursParGeneraliste(user.getId());
                 req.setAttribute("mesConsultations", mesConsultations);
+                List<Consultation> consultationsBlocantes = generalisteService.getConsultationsEnCoursStrictParGeneraliste(user.getId());
+                req.setAttribute("consultationBlocante", consultationsBlocantes.isEmpty() ? null : consultationsBlocantes.get(0));
             }
 
             req.getRequestDispatcher("/WEB-INF/views/generaliste/dashboard.jsp").forward(req, resp);
@@ -76,7 +80,8 @@ public class GeneralisteServlet extends HttpServlet {
 
             Utilisateur user = (Utilisateur) req.getSession().getAttribute("user");
             if (user != null) {
-                List<Consultation> consultationsEnCours = generalisteService.getConsultationsEnCoursParGeneraliste(user.getId());
+                // Page recherche : uniquement les consultations EN_COURS (pas EN_ATTENTE_AVIS_SPECIALISTE)
+                List<Consultation> consultationsEnCours = generalisteService.getConsultationsEnCoursStrictParGeneraliste(user.getId());
                 req.setAttribute("consultationsEnCours", consultationsEnCours);
             }
             req.setAttribute("fromConsultation", fromConsultation);

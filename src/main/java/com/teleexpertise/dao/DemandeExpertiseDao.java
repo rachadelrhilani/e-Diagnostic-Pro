@@ -84,7 +84,8 @@ public class DemandeExpertiseDao extends GenericDaoImpl<DemandeExpertise, Long> 
     }
 
     /**
-     * US8: Enregistrer l'avis médical et les recommandations du spécialiste, puis marquer la demande comme terminée
+     * US8: Enregistrer l'avis médical et les recommandations du spécialiste, puis marquer la demande comme terminée.
+     * Règle métier : la consultation liée devient automatiquement TERMINEE.
      */
     public void repondreAExpertise(Long demandeId, String avisMedical, String recommandations) {
         EntityManager em = JPAUtil.getEntityManager();
@@ -98,6 +99,15 @@ public class DemandeExpertiseDao extends GenericDaoImpl<DemandeExpertise, Long> 
                 demande.setStatut(StatutExpertise.TERMINEE);
                 demande.setDateReponse(LocalDateTime.now());
                 em.merge(demande);
+
+                // La réponse du spécialiste clôture automatiquement la consultation
+                if (demande.getConsultation() != null) {
+                    Consultation consultation = em.find(Consultation.class, demande.getConsultation().getId());
+                    if (consultation != null) {
+                        consultation.setStatut(StatutConsultation.TERMINEE);
+                        em.merge(consultation);
+                    }
+                }
             }
             tx.commit();
         } catch (Exception e) {
@@ -132,7 +142,9 @@ public class DemandeExpertiseDao extends GenericDaoImpl<DemandeExpertise, Long> 
 }
 
     /**
-     * US6: Annulation d'une demande d'expertise : le créneau redevient disponible
+     * US6 / US8: Annulation d'une demande d'expertise ou d'un avis déjà rendu :
+     * la demande passe à ANNULEE et le créneau redevient automatiquement DISPONIBLE.
+     * La consultation liée est rouverte en EN_COURS (sauf si déjà TERMINEE sans expertise).
      */
     public void annulerDemandeExpertise(Long demandeId) {
         EntityManager em = JPAUtil.getEntityManager();
@@ -141,19 +153,27 @@ public class DemandeExpertiseDao extends GenericDaoImpl<DemandeExpertise, Long> 
             tx.begin();
             DemandeExpertise demande = em.find(DemandeExpertise.class, demandeId);
             if (demande != null) {
+                // Seules les demandes en attente ou terminées peuvent être annulées
+                if (demande.getStatut() == StatutExpertise.ANNULEE) {
+                    throw new IllegalStateException("Cette demande est déjà annulée.");
+                }
                 demande.setStatut(StatutExpertise.ANNULEE);
                 if (demande.getCreneau() != null) {
-                    // Si le créneau n'est pas encore passé, il redevient DISPONIBLE
-                    if (demande.getCreneau().getHeureFin().isAfter(LocalDateTime.now())) {
-                        demande.getCreneau().setStatut(StatutCreneau.DISPONIBLE);
-                    } else {
-                        demande.getCreneau().setStatut(StatutCreneau.ARCHIVE);
+                    // Règle métier : créneau annulé => automatiquement DISPONIBLE
+                    // (l'archivage automatique gérera les créneaux dont l'heure est passée)
+                    Creneau creneau = em.find(Creneau.class, demande.getCreneau().getId());
+                    if (creneau != null) {
+                        creneau.setStatut(StatutCreneau.DISPONIBLE);
+                        em.merge(creneau);
                     }
-                    em.merge(demande.getCreneau());
                 }
                 if (demande.getConsultation() != null) {
-                    demande.getConsultation().setStatut(StatutConsultation.EN_COURS);
-                    em.merge(demande.getConsultation());
+                    Consultation consultation = em.find(Consultation.class, demande.getConsultation().getId());
+                    if (consultation != null) {
+                        // Annuler l'avis rouvre la consultation (EN_ATTENTE ou TERMINEE via expertise -> EN_COURS)
+                        consultation.setStatut(StatutConsultation.EN_COURS);
+                        em.merge(consultation);
+                    }
                 }
                 em.merge(demande);
             }
@@ -164,5 +184,13 @@ public class DemandeExpertiseDao extends GenericDaoImpl<DemandeExpertise, Long> 
         } finally {
             em.close();
         }
+    }
+
+    /**
+     * US8: Le spécialiste annule son avis déjà rendu : même effet que l'annulation
+     * (demande ANNULEE + créneau libéré + consultation rouverte).
+     */
+    public void annulerAvis(Long demandeId) {
+        annulerDemandeExpertise(demandeId);
     }
 }

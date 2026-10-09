@@ -39,15 +39,52 @@ public class InfirmierService {
     }
 
     public Consultation envoyerVersFileDattente(Long patientId, Long generalisteId, String motif, String observations) {
+        // 1. Un patient ne peut avoir qu'une seule consultation active (EN_COURS ou EN_ATTENTE_AVIS)
         if (consultationDao.aUneConsultationEnCours(patientId)) {
             throw new IllegalStateException(
                     "Ce patient a déjà une consultation en cours ou est déjà dans la file d'attente.");
+        }
+        // 2. Un généraliste ne peut avoir qu'un seul patient EN_COURS à la fois
+        List<Consultation> generalisteEnCours = consultationDao.findConsultationsEnCoursStrictParGeneraliste(generalisteId);
+        if (generalisteEnCours != null && !generalisteEnCours.isEmpty()) {
+            throw new IllegalStateException(
+                    "Ce généraliste a déjà une consultation en cours (Dossier #" + generalisteEnCours.get(0).getId() +
+                    " - " + generalisteEnCours.get(0).getPatient().getNom() + " " + generalisteEnCours.get(0).getPatient().getPrenom() +
+                    "). Choisissez un autre médecin.");
         }
         String motifAjuste = (motif != null && !motif.trim().isEmpty()) ? motif : "Orientation par l'infirmier(e)";
         String obsAjustees = (observations != null) ? observations : "Patient placé en file d'attente";
 
         // Appel direct à votre méthode DAO existante
         return consultationDao.creerConsultation(patientId, generalisteId, motifAjuste, obsAjustees);
+    }
+
+    /**
+     * Retourne la consultation active du patient (EN_COURS ou EN_ATTENTE), ou null.
+     * Utilisé lors de la recherche NSS pour afficher que le patient est déjà en cours.
+     */
+    public Consultation getConsultationActivePatient(Long patientId) {
+        if (patientId == null) return null;
+        return consultationDao.findConsultationActiveParPatient(patientId);
+    }
+
+    /**
+     * Vrai si le généraliste a déjà une consultation EN_COURS (EN_ATTENTE ne bloque pas).
+     */
+    public boolean generalisteAUneConsultationEnCours(Long generalisteId) {
+        if (generalisteId == null) return false;
+        List<Consultation> list = consultationDao.findConsultationsEnCoursStrictParGeneraliste(generalisteId);
+        return list != null && !list.isEmpty();
+    }
+
+    /**
+     * Ids des généralistes occupés (avec EN_COURS) pour griser la liste dans le dashboard infirmier.
+     */
+    public List<Long> getIdsGeneralistesOccupes() {
+        return getAllGeneralistes().stream()
+                .map(Generaliste::getId)
+                .filter(this::generalisteAUneConsultationEnCours)
+                .collect(Collectors.toList());
     }
 
     public Patient enregistrerNouveauPatient(Patient patient, SignesVitaux signes) {

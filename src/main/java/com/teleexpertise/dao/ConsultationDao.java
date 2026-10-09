@@ -162,6 +162,34 @@ public class ConsultationDao extends GenericDaoImpl<Consultation, Long> {
         }
     }
 
+    /**
+     * Retourne la consultation active (EN_COURS ou EN_ATTENTE_AVIS_SPECIALISTE) d'un patient, ou null.
+     * Utilisé par l'infirmier lors de la recherche NSS pour afficher que le patient est déjà en cours.
+     */
+    public Consultation findConsultationActiveParPatient(Long patientId) {
+        EntityManager em = JPAUtil.getEntityManager();
+        try {
+            List<StatutConsultation> statutsActifs = Arrays.asList(
+                    StatutConsultation.EN_COURS,
+                    StatutConsultation.EN_ATTENTE_AVIS_SPECIALISTE);
+            List<Consultation> list = em.createQuery(
+                    "SELECT c FROM Consultation c " +
+                    "JOIN FETCH c.patient p " +
+                    "JOIN FETCH c.generaliste g " +
+                    "WHERE c.patient.id = :patientId " +
+                    "AND c.statut IN :statutsActifs " +
+                    "ORDER BY c.id DESC",
+                    Consultation.class)
+                    .setParameter("patientId", patientId)
+                    .setParameter("statutsActifs", statutsActifs)
+                    .setMaxResults(1)
+                    .getResultList();
+            return list.isEmpty() ? null : list.get(0);
+        } finally {
+            em.close();
+        }
+    }
+
     public List<Consultation> findConsultationsEnCoursParGeneraliste(Long generalisteId) {
     EntityManager em = JPAUtil.getEntityManager();
     try {
@@ -184,6 +212,31 @@ public class ConsultationDao extends GenericDaoImpl<Consultation, Long> {
                 Consultation.class)
                 .setParameter("generalisteId", generalisteId)
                 .setParameter("statutsActifs", statutsActifs)
+                .getResultList();
+    } finally {
+        em.close();
+    }
+}
+
+    /**
+     * Retourne uniquement les consultations EN_COURS (exclut EN_ATTENTE_AVIS_SPECIALISTE).
+     * Utilisé pour : blocage création + liste déroulante recherche spécialiste.
+     */
+    public List<Consultation> findConsultationsEnCoursStrictParGeneraliste(Long generalisteId) {
+    EntityManager em = JPAUtil.getEntityManager();
+    try {
+        return em.createQuery(
+                "SELECT DISTINCT c FROM Consultation c " +
+                "JOIN FETCH c.patient p " +
+                "LEFT JOIN FETCH c.actesMedicaux " +
+                "LEFT JOIN FETCH c.demandeExpertise d " +
+                "LEFT JOIN FETCH d.specialiste " +
+                "WHERE c.generaliste.id = :generalisteId " +
+                "AND c.statut = :statut " +
+                "ORDER BY c.id DESC",
+                Consultation.class)
+                .setParameter("generalisteId", generalisteId)
+                .setParameter("statut", StatutConsultation.EN_COURS)
                 .getResultList();
     } finally {
         em.close();

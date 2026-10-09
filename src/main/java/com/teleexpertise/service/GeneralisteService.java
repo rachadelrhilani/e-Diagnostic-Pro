@@ -29,11 +29,12 @@ public class GeneralisteService {
     }
 
     public Consultation creerConsultation(Long patientId, Long generalisteId, String motif, String observations) {
-        // Règle métier : un généraliste ne peut avoir qu'une seule consultation en cours à la fois
-        List<Consultation> consultationsActives = consultationDao.findConsultationsEnCoursParGeneraliste(generalisteId);
-        if (!consultationsActives.isEmpty()) {
+        // Règle métier : un généraliste ne peut avoir qu'une seule consultation EN_COURS à la fois.
+        // Une consultation EN_ATTENTE_AVIS_SPECIALISTE ne bloque pas la création.
+        List<Consultation> consultationsEnCours = consultationDao.findConsultationsEnCoursStrictParGeneraliste(generalisteId);
+        if (!consultationsEnCours.isEmpty()) {
             throw new IllegalStateException(
-                "Vous avez déjà une consultation en cours (Dossier #" + consultationsActives.get(0).getId() +
+                "Vous avez déjà une consultation en cours (Dossier #" + consultationsEnCours.get(0).getId() +
                 "). Veuillez la clôturer avant d'en démarrer une nouvelle.");
         }
         return consultationDao.creerConsultation(patientId, generalisteId, motif, observations);
@@ -90,6 +91,18 @@ public class GeneralisteService {
             return List.of();
         }
         return consultationDao.findConsultationsEnCoursParGeneraliste(generalisteId);
+    }
+
+    /**
+     * Retourne uniquement les consultations EN_COURS (exclut EN_ATTENTE_AVIS_SPECIALISTE).
+     * Utilisé pour la page recherche spécialiste : seuls ces dossiers peuvent faire l'objet
+     * d'une nouvelle demande d'expertise.
+     */
+    public List<Consultation> getConsultationsEnCoursStrictParGeneraliste(Long generalisteId) {
+        if (generalisteId == null) {
+            return List.of();
+        }
+        return consultationDao.findConsultationsEnCoursStrictParGeneraliste(generalisteId);
     }
 
     public List<Patient> getPatientsEnAttente() {

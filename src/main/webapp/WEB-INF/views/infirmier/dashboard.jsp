@@ -84,12 +84,20 @@
                                 </c:when>
                                 <c:otherwise>
                                     <form action="${pageContext.request.contextPath}/infirmier/envoyer-file-dattente" method="post" class="inline-flex items-center gap-2">
+                                        <input type="hidden" name="_csrf" value="${sessionScope.csrfToken}" />
                                         <input type="hidden" name="patientId" value="${p.id}" />
 
                                         <select name="generalisteId" required class="px-2 py-1.5 rounded-lg bg-slate-900 border border-slate-700 text-xs text-slate-300 focus:outline-none">
                                             <option value="" disabled selected>-- Choisir médecin --</option>
                                             <c:forEach var="medecin" items="${listeGeneralistes}">
-                                                <option value="${medecin.id}">Dr. ${medecin.prenom} ${medecin.nom}</option>
+                                                <c:choose>
+                                                    <c:when test="${generalistesOccupes.contains(medecin.id)}">
+                                                        <option value="${medecin.id}" disabled>Dr. ${medecin.prenom} ${medecin.nom} (occupé — 1 en cours)</option>
+                                                    </c:when>
+                                                    <c:otherwise>
+                                                        <option value="${medecin.id}">Dr. ${medecin.prenom} ${medecin.nom}</option>
+                                                    </c:otherwise>
+                                                </c:choose>
                                             </c:forEach>
                                         </select>
 

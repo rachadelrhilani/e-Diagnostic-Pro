@@ -58,20 +58,21 @@
                 <!-- Sélection du patient en cours (affiché uniquement si non issu de la page consultation) -->
                 <div class="p-4 rounded-xl bg-slate-900/60 border border-slate-700 space-y-2">
                     <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
-                        <span>👤</span> Patient associé (Consultation en cours) <span class="text-rose-400">*</span>
+                        <span>👤</span> Patient associé (Consultation EN_COURS uniquement) <span class="text-rose-400">*</span>
                     </label>
                     <select name="consultationId" id="consultationSelect" required 
                             class="w-full px-4 py-3 rounded-xl bg-slate-900 border border-slate-700 text-white text-sm focus:outline-none focus:border-indigo-500 transition">
-                        <option value="" disabled ${empty consultationId ? 'selected' : ''}>-- Sélectionner un patient ayant une consultation en cours --</option>
+                        <option value="" disabled ${empty consultationId ? 'selected' : ''}>-- Sélectionner un patient ayant une consultation EN_COURS --</option>
                         <c:forEach var="c" items="${consultationsEnCours}">
                             <option value="${c.id}" ${consultationId == c.id ? 'selected' : ''}>
                                 ${c.patient.nom} ${c.patient.prenom} (NSS: ${c.patient.numeroSecuriteSociale}) — Motif: ${c.motif}
                             </option>
                         </c:forEach>
                     </select>
+                    <p class="text-[11px] text-slate-500 mt-1">Seuls les dossiers EN_COURS sont proposés. Les dossiers EN_ATTENTE_AVIS_SPECIALISTE ont déjà une expertise en cours.</p>
                     <c:if test="${empty consultationsEnCours}">
                         <p class="text-xs text-amber-400 mt-1 flex items-center gap-1">
-                            <span>⚠️</span> Aucune consultation en cours. Veuillez d'abord démarrer une consultation depuis votre tableau de bord.
+                            <span>⚠️</span> Aucune consultation EN_COURS. Veuillez d'abord démarrer une consultation depuis votre tableau de bord.
                         </p>
                     </c:if>
                 </div>
